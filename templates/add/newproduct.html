@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>新审批产品</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/static/soulTable/soulTable.css" media="all"/>
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item layui-this">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="tradeinfo">新增交易记录</a></dd>
+      <dd class="layui-this"><a href="newproduct">新审批产品</a></dd>
+      <dd><a href="modifyamt">修改总办会额度</a></dd>
+      <dd><a href="unitdata">录入每日基金净值</a></dd>
+      <dd><a href="calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>每日基金数据录入-新审批产品</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    更新产品基础信息表、总办会额度表
+    <br>*新增产品方法一：通过Excel模板上传，支持批量上传。
+    <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;同时，通过产品名称进行匹配，如产品名称相同，所有字段将修改替换。
+    <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;如修改审批额度，额度表进行同步更新。
+    <br>*新增产品方法二：界面录入。
+    <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;界面修改产品信息时，仅支持修改额度（仅需要填写产品名称及累计审批额度），其他字段可不填。
+    <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;额度表进行同步更新。
+    <br>*修改产品信息表：表格内点击“编辑”，按模板格式进行修改。
+    <br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;注意：此类修改方式仅修改产品信息表。即使修改额度，额度表不会进行同步更新，如需修改额度请使用方法二。
+{#    <br>*难点：填写全部字段，进行全部字段替换。但大多数字段不需要替换时，其它字段仍需要填写正确。（全部字段全部替换）#}
+{#    <br>*解决思路：输入产品名称，进行检查，是否存在该名称对应的数据，如果存在，回填form全部字段，修改后保存替换全部字段。#}
+    <br>*如已审批未投的产品需要取消，修改审批额度为0，产品状态自动更新为已结束，且释放额度。
+    <br>*请勿重复提交
+</blockquote>
+
+<div style="padding: 30px;">
+    <div style="padding-bottom: 20px;">
+        <label class="layui-form-label">上传数据</label>
+        <button type="button" class="layui-btn layui-btn-normal" id="uploadProduct"><i class="layui-icon"></i>录入产品</button>
+    </div>
+    {#表单+按钮#}
+    <form class="layui-form" action="/fxglb/addProductInfo" method="post" style="white-space:nowrap!important;">
+        {%csrf_token%}
+
+    <fieldset class="layui-elem-field">
+      <legend style="font-weight: bold">基础信息</legend>
+      <div class="layui-field-box">
+            {##申请日期+确认日期#}
+          <div class="layui-form-item">
+              <div class="layui-inline layui-col-md3" >
+                  <label class="layui-form-label" >投委会通过日期</label>
+                  <div class="layui-input-block" style="padding-left:20px">
+                    <input type="text" name="confirmDate1" id="confirmDate1" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                  </div>
+              </div>
+              <div class="layui-inline layui-col-md3">
+                  <label class="layui-form-label">总办会通过日期</label>
+                  <div class="layui-input-block" style="padding-left:20px">
+                    <input type="text" name="confirmDate2" id="confirmDate2" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+                  </div>
+              </div>
+              {#        状态开关#}
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                  <input type="checkbox" checked="" name="status" lay-skin="switch" lay-filter="switchTest" lay-text="未结束|已结束">
+                </div>
+            </div>
+
+          </div>
+            {##产品名称#}
+          <div class="layui-form-item">
+              <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">产品名称</label>
+                <div class="layui-input-block">
+                  <input type="text" name="productName" class="layui-input" lay-verify="required" autocomplete="off">
+                </div>
+              </div>
+              <div class="layui-inline layui-col-md4">
+                <label class="layui-form-label">产品全名</label>
+                <div class="layui-input-block">
+                  <input type="text" name="productFullName" class="layui-input" autocomplete="off">
+                </div>
+              </div>
+          </div>
+            {##产品信息#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">产品类型1</label>
+                <div class="layui-input-block">
+                  <select name="productType1" id="productType1" lay-filter="productType1" lay-verify="required" lay-search="" class="'productType1">
+                      <option value="">请选择</option>
+                      <option value="A固定收益类">A固定收益类</option>
+                      <option value="B权益类">B权益类</option>
+                      <option value="C混合类">C混合类</option>
+                      <option value="D商品及金融衍生品类">D商品及金融衍生品类</option>
+                      <option value="E非标类">E非标类</option>
+                      <option value="F其他类">F其他类</option>
+                  </select>
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label" >产品类型2</label>
+                <div class="layui-input-block">
+                    <div name="productType2" id="productType2" lay-filter="productType2" class="xm-select-demo"></div>
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">产品类型3</label>
+                <div class="layui-input-block">
+                  <select name="productType3" id="productType3" lay-filter="productType3" lay-search="" class="productType3">
+                      <option value="">请选择</option>
+                      <option value="A集合资管计划">A集合资管计划</option>
+                      <option value="B单一资管计划">B单一资管计划</option>
+                      <option value="C集合信托计划">C集合信托计划</option>
+                      <option value="D单一信托计划">D单一信托计划</option>
+                      <option value="E专项资管计划">E专项资管计划</option>
+                      <option value="F公募基金">F公募基金</option>
+                      <option value="G私募基金">G私募基金</option>
+                  </select>
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md10" style="font-size: x-small; color: #8D8D8D;margin-left: 100px">
+                *产品类型1根据产品合同填列，若合同中没有明确产品类型的，资管产品、私募产品建议根据资管新规中定义进行填列；公募产品建议根据主要投向或投资策略进行填列。
+                <br>*产品类型2中，根据产品主要投向进行填列，例如50%以上投资于债券资产则选A1;若各类资产投资比例均低于50%，则根据实际情况多选。
+            </div>
+          </div>
+            {##产品信息 是否#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">产品策略</label>
+                <div class="layui-input-block">
+                  <select name="strategy" id="strategy" lay-filter="strategy" lay-search="" class="strategy">
+                      <option value="">请选择</option>
+                      <option value="方向性">方向性</option>
+                      <option value="对冲套利类">对冲套利类</option>
+                  </select>
+                </div>
+            </div>
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">次级</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="senior" title="次级" id="redeemLimit" lay-filter="redeemLimit" >
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3" style="margin-right: -200px">
+                    <label class="layui-form-label">赎回受限</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="redeemLimit" title="赎回受限" id="redeemLimit" lay-filter="redeemLimit" >
+                    </div>
+                </div>
+              <div style="font-size: x-small; color: #8D8D8D; padding-top: 10px" >*若产品为每日开放申赎，或投资者与管理人沟通可临时开放赎回的，则赎回不受限；否则为赎回受限。</div>
+          </div>
+            {##产品信息 管理人#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">管理人</label>
+                <div class="layui-input-block">
+                  <input type="text" name="manager" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">负责部门及人员</label>
+                <div class="layui-input-block" style="padding-left:40px">
+                  <input type="text" name="sector" class="layui-input">
+                </div>
+            </div>
+          </div>
+
+    {#        额度#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">累计审批额度</label>
+                <div class="layui-input-block">
+                  <input type="text" name="totalAmount" class="layui-input" lay-verify="required" autocomplete="off">
+                    <div id="usableAmount" style="padding-top: 15px; font-weight: bold;color: #c60808"></div>
+                </div>
+            </div>
+          </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="layui-elem-field">
+      <legend style="font-weight: bold">风控信息</legend>
+      <div class="layui-field-box" >
+    {#        预警线+清盘线#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">预警线</label>
+                <div class="layui-input-block">
+                  <input type="text" name="alertLimit" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">清盘线</label>
+                <div class="layui-input-block">
+                  <input type="text" name="cleanLimit" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+          </div>
+
+    {#拟出资时间 拟投资期限#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">拟出资时间</label>
+                <div class="layui-input-block">
+                  <input type="text" name="preProvideFundDate" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md6">
+                <label class="layui-form-label">拟投资期限</label>
+                <div class="layui-input-block">
+                  <input type="text" name="preInvestDuration" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+          </div>
+
+    {#        开放日 是否临开#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">开放频率</label>
+                <div class="layui-input-block">
+                  <input type="text" name="openDay" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">是否有临开</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="temporaryOpen" title="有临开" id="temporaryOpen" lay-filter="temporaryOpen" >
+                </div>
+            </div>
+          </div>
+
+    {#风险预警线+风控止损线#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">风控预警线</label>
+                <div class="layui-input-block">
+                  <input type="text" name="rmAlertLimit" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">风控止损线</label>
+                <div class="layui-input-block">
+                  <input type="text" name="rmCleanLimit" class="layui-input"  autocomplete="off">
+                </div>
+            </div>
+          </div>
+
+    {#        风控条款说明#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md6">
+                <label class="layui-form-label">风控条款说明</label>
+                <div class="layui-input-block">
+                  <textarea name="rmRules" placeholder="请输入内容" class="layui-textarea"></textarea>
+                </div>
+            </div>
+          </div>
+
+    {#        投资目的#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">投资目的</label>
+                <div class="layui-input-block">
+{#                  <input type="text" name="investPurpose" class="layui-input"  autocomplete="off">#}
+
+                  <select name="investPurpose" id="investPurpose" lay-filter="investPurpose" lay-search="" class="investPurpose">
+                      <option value="其他">默认其他</option>
+                      <option value="获取投资收益">获取投资收益</option>
+                      <option value="促进经纪业务">促进经纪业务</option>
+                      <option value="促进资管业务转型">促进资管业务转型</option>
+                  </select>
+
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label" style="margin-right: 80px">是否为公司自主管理产品</label>
+                <div class="layui-input-block" >
+                    <input type="checkbox" name="selfManage" title="自主管理" id="selfManage" lay-filter="selfManage" style="margin-left: 80px">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label" style="margin-right: 40px">公司是否担任投顾</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="investAdvisor" title="担任投顾" id="investAdvisor" lay-filter="investAdvisor" style="margin-left: 40px">
+                </div>
+            </div>
+          </div>
+
+    {#        协同#}
+          <div class="layui-form-item">
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label" style="margin-right: 40px">是否涉及与证券协同</label>
+                    <div class="layui-input-block">
+                        <input type="checkbox" name="synergy" title="协同证券" id="synergy" lay-filter="synergy" style="margin-left: 40px">
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">第三方</label>
+                    <div class="layui-input-block">
+                      <input type="text" name="thirdParty" class="layui-input"  autocomplete="off">
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label" style="margin-right: 40px">拟协同业务规模</label>
+                    <div class="layui-input-block">
+                      <input type="text" name="synergyAmount" class="layui-input"  autocomplete="off" style="margin-left: 40px;width: 250px">
+                    </div>
+                </div>
+            </div>
+
+      </div>
+    </fieldset>
+
+
+{#        备注#}
+      <div class="layui-form-item">
+        <div class="layui-inline layui-col-md6">
+            <label class="layui-form-label">备注</label>
+            <div class="layui-input-block">
+              <textarea name="demo" placeholder="请输入内容" class="layui-textarea"></textarea>
+            </div>
+        </div>
+      </div>
+
+        {##确认按钮#}
+        <div class="layui-form-item">
+            <button class="layui-btn  layui-btn-normal layui-col-md1" lay-submit="" lay-filter="saveBtn">保存</button>
+        </div>
+    </form>
+</div>
+<div style="padding: 20px;">
+    {##产品基础信息表#}
+    <table class="layui-hide" id="basicInfo"  lay-filter="basicInfo"></table>
+    {##总办会额度表#}
+    <table class="layui-hide" id="totalAmount"  lay-filter="totalAmount"></table>
+</div>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<script src="/static/xm-select.js" charset="utf-8"></script>
+<script>
+    layui.config({
+        base: '/static/',   // 第三方模块所在目录
+        version: 'v1.5.21' // 插件版本号
+    }).extend({
+        soulTable: 'soulTable/soulTable',
+        tableChild: 'soulTable/tableChild',
+        tableMerge: 'soulTable/tableMerge',
+        tableFilter: 'soulTable/tableFilter',
+        excel: 'soulTable/excel',
+    });
+
+</script>
+<script>
+var productType2 = xmSelect.render({
+	el: '#productType2',
+    name: 'productType2',
+    theme: {
+		color: '#1E9FFF',
+	},
+    toolbar: {
+		show: true
+	},
+    filterable: true,
+    autoRow: true,
+	data: [
+		{name: 'A1债券型', value: 'A1'},
+		{name: 'A2债券型基金、债券型资管产品', value: 'A2'},
+		{name: 'A3股票质押', value: 'A3'},
+		{name: 'B1股票一级', value: 'B1'},
+		{name: 'B2股票定增', value: 'B2'},
+		{name: 'B3股票二级', value: 'B3'},
+		{name: 'B4新三板（挂牌）', value: 'B4'},
+		{name: 'B5股票型基金、股票型资管产品', value: 'B5'},
+		{name: 'C1混合-偏股类', value: 'C1'},
+		{name: 'C2混合-偏债类', value: 'C2'},
+		{name: 'C3混合-其他类', value: 'C3'},
+		{name: 'D1股指期货', value: 'D1'},
+		{name: 'D2国债期货', value: 'D2'},
+		{name: 'D3商品期货', value: 'D3'},
+		{name: 'D4场内期权', value: 'D4'},
+		{name: 'D5场外期权', value: 'D5'},
+		{name: 'D6收益互换', value: 'D6'},
+		{name: 'E1非标债权', value: 'E1'},
+		{name: 'E2非标股权', value: 'E2'},
+		{name: 'E3其他非标投资', value: 'E3'}
+	]
+})
+</script>
+{#表单功能#}
+<script>
+layui.use(['form', 'layedit', 'laydate'], function(){
+  var form = layui.form
+      ,laydate = layui.laydate;
+
+  //申请日期
+  laydate.render({
+    elem: '#confirmDate1'
+      , max: new Date().toLocaleString()
+  });
+  //确认日期
+  laydate.render({
+    elem: '#confirmDate2'
+      , max: new Date().toLocaleString()
+  });
+  //单选框：交易类型
+  form.render('radio', function(data){
+      $('#tradeType input').removeAttr('checked');
+      $(data.elem).attr('checked','checked');
+    });
+
+
+});
+</script>
+{#编辑按钮#}
+<script type="text/html" id="editBar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+</script>
+{#表格#}
+<script>
+    layui.use(['table', 'laydate','form', 'jquery','laypage','soulTable'], function () {
+        var table = layui.table;
+            soulTable = layui.soulTable;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        $.ajax({
+            url: "/fxglb/getTotalAmountInfo",
+            success: function (res) {
+                console.log(res)
+                let data = res.data.availableAmount
+                document.getElementById("usableAmount").innerHTML = '（可审批额度：' + data + '元）';
+            }
+        })
+        var tableIns = table.render({
+            elem: '#basicInfo'
+            , url: '/fxglb/getBasicInfo'
+            , toolbar: '#toolbarDemo'
+            , title: '产品信息表'
+            , cellMinWidth: 80
+            , height: 500
+            , defaultToolbar: ['filter', 'exports', 'print',{
+                title:'综合止损线',layEvent: 'LAYTABLE_EXCEL',icon: 'layui-icon-util'
+            }]
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.fundBasicInfoData)
+                fundBasicInfoData = res.data.fundBasicInfoData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.fundBasicInfoData //解析数据列表
+                };
+            }
+            , cols: [[
+                {field:"right", title:"操作", align: 'center', fixed: 'left', toolbar:"#editBar"}
+                , {field: "date", title: '数据日期', align: 'center', fixed: 'left', width: '7%', minWidth: 200}
+                , {field: "productName", title: '产品名称', align: 'center', fixed: 'left', width: '10%', minWidth: 200, filter: true}
+
+                , {field: "confirmDate1", title: '投委会通过日期', align: 'center', width: 150,}
+                , {field: "confirmDate2", title: '总办会通过日期', align: 'center', width: 150}
+                , {field: "status", title: '状态', align: 'center', filter: true}
+                , {field: "investableAmount", title: '剩余可投资额度', align: 'center', width: 150}
+                , {field: "totalAmount", title: '累计审批额度', align: 'center', width: 150}
+                , {field: "redeemCost", title: '累计赎回成本', align: 'center', width: 150}
+
+                , {field: "productFullName", title: '产品全名', align: 'center', width: '15%'}
+                , {field: "productType1", title: '产品类型1', align: 'center', width: 150, filter: true}
+                , {field: "productType2", title: '产品类型2', align: 'center', width: 150, filter: true}
+                , {field: "productType3", title: '产品类型3', align: 'center', width: 150, filter: true}
+                , {field: "strategy", title: '产品策略', align: 'center', width: 150, filter: true}
+                , {field: "senior", title: '是否为次级', align: 'center', width: '7%'}
+                , {field: "redeemLimit", title: '赎回是否受限', align: 'center', width: '7%'}
+                , {field: "manager", title: '管理人', align: 'center', width: 200, filter: true}
+
+                , {field: "sector", title: '项目负责部门及人员', align: 'center', width: 200, filter: true}
+
+                , {field: "alertLimit", title: '预警线', align: 'center', width: '5%'}
+                , {field: "cleanLimit", title: '清盘线', align: 'center', width: '5%'}
+
+                , {field: "preProvideFundDate", title: '拟出资时间', align: 'center', width: '7%'}
+                , {field: "preInvestDuration", title: '拟投资期限', align: 'center', width: '7%'}
+                , {field: "openDay", title: '开放频率', align: 'center', width: '7%'}
+                , {field: "temporaryOpen", title: '是否有临开', align: 'center', width: '7%'}
+
+                , {field: "rmAlertLimit", title: '风控预警线', align: 'center', width: '7%'}
+                , {field: "rmCleanLimit", title: '风控止损线', align: 'center', width: '7%'}
+
+                , {field: "rmRules", title: '风控条款说明', align: 'center', width: '15%'}
+                , {field: "investPurpose", title: '投资目的', align: 'center', width: 150, filter: true}
+                , {field: "selfManage", title: '是否为公司自主管理产品', align: 'center', width: '12%'}
+                , {field: "investAdvisor", title: '公司是否担任投顾', align: 'center', width: '10%'}
+                , {field: "synergy", title: '是否涉及与证券协同', align: 'center', width: '10%'}
+                , {field: "thirdParty", title: '第三方', align: 'center', width: '7%'}
+                , {field: "synergyAmount", title: '拟协同业务规模', align: 'center', width: '7%'}
+
+                , {field: "demo", title: '备注', align: 'center', width: '7%'}
+            ]]
+            {#, page: true#}
+            , filter: {
+                bottom: false
+            }
+            , done: function () {
+                soulTable.render(this)
+            }
+        });
+
+        var totalAmountIns = table.render({
+            elem: '#totalAmount'
+            , url: '/fxglb/getTotalAmountInfo'
+            , toolbar: '#toolbarDemo'
+            , title: '产品基础信息表'
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.totalAmountData)
+                totalAmountData = res.data.totalAmountData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                {field: "date", title: '数据日期', align: 'center'}
+                , {field: "confirmDate", title: '确认日期', align: 'center'}
+                , {field: "totalAmount", title: '总额度', align: 'center'}
+                , {field: "newUsed", title: '新增审批', align: 'center'}
+                , {field: "usedAmount", title: '已审批额度', align: 'center'}
+                , {field: "newBack", title: '已赎回额度', align: 'center'}
+                , {field: "usableAmount", title: '剩余额度', align: 'center'}
+                , {field: "demo", title: '备注', align: 'center', fixed: 'right', width: '20%', minWidth: 200}
+            ]]
+            , page: true
+        });
+
+        //监听提交-editBar
+        table.on('tool(basicInfo)', function(obj){
+            var data = obj.data
+            , layEvent = obj.event;
+            if(layEvent === 'edit'){
+                layer.prompt({
+                    formType:2
+                    ,area: ['400px', '600px']
+                    ,title:'修改产品名称['+data.productName+']的基础信息'
+                    ,value: '投委会通过日期:'+data.confirmDate1+';\n'+
+                        '总办会通过日期:'+data.confirmDate2+';\n'+
+
+                        '状态:'+data.status+';\n'+
+                        '剩余可投资额度:'+data.investableAmount+';\n'+
+                        '累计审批额度:'+data.totalAmount+';\n'+
+                        '累计赎回成本:'+data.redeemCost+';\n'+
+
+                        '产品全名:'+data.productFullName+';\n'+
+                        '产品类型1:'+data.productType1+';\n'+
+                        '产品类型2:'+data.productType2+';\n'+
+                        '产品类型3:'+data.productType3+';\n'+
+                        '产品策略:'+data.strategy+';\n'+
+                        '是否为次级:'+data.senior+';\n'+
+                        '赎回是否受限:'+data.redeemLimit+';\n'+
+                        '管理人:'+data.manager+';\n'+
+                        '项目负责部门及人员:'+data.sector+';\n'+
+
+                        '预警线:'+data.alertLimit+';\n'+
+                        '清盘线:'+data.cleanLimit+';\n'+
+                        '拟出资时间:'+data.preProvideFundDate+';\n'+
+                        '拟投资期限:'+data.preInvestDuration+';\n'+
+                        '开放频率:'+data.openDay+';\n'+
+                        '是否有临开:'+data.temporaryOpen+';\n'+
+                        '风控预警线:'+data.rmAlertLimit+';\n'+
+                        '风控止损线:'+data.rmCleanLimit+';\n'+
+                        '风控条款说明:'+data.rmRules+';\n'+
+                        '投资目的:'+data.investPurpose+';\n'+
+                        '是否为公司自主管理产品:'+data.selfManage+';\n'+
+                        '公司是否担任投顾:'+data.investAdvisor+';\n'+
+                        '是否涉及与证券协同:'+data.synergy+';\n'+
+                        '第三方:'+data.thirdParty+';\n'+
+                        '拟协同业务规模:'+data.synergyAmount+';\n'+
+                        '备注:'+data.demo+';'
+                }, function(value, index){
+                    Edit(data, value, index, obj);
+                });
+            }else if(obj.event === 'LAYTABLE_EXCEL'){
+                var formSelect = form.val('searchForm');
+                $.ajax({
+                    type: 'get'
+                    ,url: ctx + '/fxglb/inventoryReport/getInventoryHistoryList'
+                    ,data: formSelect
+                    ,success:function(res){
+                        table.exportFile('tableList', res.data,'xls');
+                    }
+            });
+        }
+        });
+        function Edit(data, value, index, obj){
+            $.ajax({
+                url:"../modifyBasicInfo",
+                type: "GET",
+                data:{'productName':data.productName, "basicInfo":value},
+                dataType: "json",
+                success: function(data){
+                    if(data['status'] == "success") {
+                        layer.close(index);
+                        obj.update({
+                            productType1: value
+                        });
+                        layer.msg("修改成功", {icon: 6});
+                    }else{
+                        layer.msg("修改失败", {icon: 5});
+                    }
+                }
+            });
+        }
+
+        //监听提交-form
+        form.on('submit(saveBtn)', function (data) {
+            var data = data.field;
+            var dates = data.searchDate;
+
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": dates
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+            totalAmountIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": dates
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+        });
+
+    })
+</script>
+
+{#开关键#}
+<script>
+    layui.use(['form', 'layedit', 'laydate'], function() {
+        var form = layui.form
+            , layer = layui.layer
+            , layedit = layui.layedit
+            , laydate = layui.laydate;
+
+        //监听指定开关
+        form.on('switch(switchTest)', function (data) {
+            layer.msg('产品状态：' + (this.checked ? '未结束' : '已结束'), {
+                offset: '6px'
+            });
+            layer.tips('温馨提示：产品状态默认未结束。当补录已结束产品时，请选择已结束', data.othis)
+        });
+    });
+</script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+{#上传文件数据#}
+<script>
+layui.use([ 'jquery'], function () {
+
+    var $ = layui.jquery;
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+    })
+})
+</script>
+<script>
+layui.use('upload', function(){
+  var $ = layui.jquery
+  ,upload = layui.upload;
+
+  upload.render({
+    elem: '#uploadProduct'
+    ,url: '../postProduct' //改成您自己的上传接口
+    ,accept: 'file' //普通文件
+    ,done: function(res){
+      layer.msg('上传成功');
+      console.log(res);
+    }
+  });
+});
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>德睿业务分析</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+    <img src="/static/layui/images/newlogo.gif"/>
+    <li class="layui-nav-item"><a href="../">主页</a></li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">每日基金数据录入</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+            <dd><a href="../add/newproduct">新审批产品</a></dd>
+            <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+            <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+            <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+            <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">报表查询</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+            <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+            <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+            <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">定期报告</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+            <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+            <dd><a href="">月报</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item layui-this">
+        <a href="javascript:;">数据分析</a>
+        <dl class="layui-nav-child">
+            <dd><a href="companyAnalysis">公司业务分析</a></dd>
+            <dd class="layui-this"><a href="deruiSectorAnalysis">德睿业务分析</a></dd>
+        </dl>
+    </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+    <legend>数据分析-德睿业务分析</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    按德睿每日报送数据统计
+    <br>
+</blockquote>
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">补充信息</legend>
+    <div class="layui-field-box">
+        <form class="layui-form layui-form-wd120" action="/fxglb/addOtcData" method="post">
+            {% csrf_token %}
+            <div class="layui-form-item">
+                <div class="layui-inline layui-col-md12">
+                    <label class="layui-form-label">数据日期</label>
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input" name="dataDate" id="dataDate" placeholder="请选择日期" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">场外商品资金占用</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="otcCommFund" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">场外金融资金占用</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="otcFinFund" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3" style="margin-left: -10px;margin-right: -10px">
+                    <label class="layui-form-label">场外其它资金占用</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="otcOthersFund" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-col-md12">
+                    <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="saveBtn" style="margin-left: 110px">保存数据</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</fieldset>
+<div class="layui-form">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">查询日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="riskDate" id="riskDate" placeholder="请选择日期"
+                       autocomplete="off"/>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="checkRisk">数据分析</button>
+        </div>
+    </div>
+</div>
+<div style="padding: 20px;" class="layui-form" lay-filter="myForm">
+    <fieldset class="layui-elem-field layui-col-xs6 layui-col-sm6 layui-col-md6">
+        <legend>银河德睿业务回撤情况</legend>
+        <table class="layui-table">
+            <colgroup>
+                <col width="80">
+                <col width="80">
+                <col width="80">
+                <col width="100">
+                <col width="100">
+                <col width="150">
+                <col>
+            </colgroup>
+            <thead>
+            <tr style="background-color: #1351a0;">
+                <th style="background-color: #1351a0; color: white; font-weight: bold">业务类型</th>
+                <th style="background-color: #1351a0; color: white; font-weight: bold">限额值</th>
+                <th style="background-color: #1351a0; color: white; font-weight: bold">指标值</th>
+                <th style="background-color: #1351a0; color: white; font-weight: bold">回撤开始日期</th>
+                <th style="background-color: #1351a0; color: white; font-weight: bold">回撤结束日期</th>
+                <th style="background-color: #1351a0; color: white; font-weight: bold">回撤开始日累计盈亏</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td style="font-weight: bold">德睿整体</td>
+                <td id="total_limit" style="font-weight: bold"></td>
+                <td id="total_d" style="font-weight: bold"></td>
+                <td id="total_beg" style="font-weight: bold"></td>
+                <td id="total_end" style="font-weight: bold"></td>
+                <td id="total_cumPnl" style="font-weight: bold"></td>
+            </tr>
+            <tr>
+                <td>场外业务</td>
+                <td id="otc_limit"></td>
+                <td id="otc_d"></td>
+                <td id="otc_beg"></td>
+                <td id="otc_end"></td>
+                <td id="otc_cumPnl"></td>
+            </tr>
+            <tr>
+                <td>做市业务</td>
+                <td id="omm_limit"></td>
+                <td id="omm_d"></td>
+                <td id="omm_beg"></td>
+                <td id="omm_end"></td>
+                <td id="omm_cumPnl"></td>
+            </tr>
+            <tr>
+                <td>期现业务</td>
+                <td id="c_limit"></td>
+                <td id="c_d"></td>
+                <td id="c_beg"></td>
+                <td id="c_end"></td>
+                <td id="c_cumPnl"></td>
+            </tr>
+            <tr>
+                <td>自营业务</td>
+                <td id="sigma_limit"></td>
+                <td id="sigma_d"></td>
+                <td id="sigma_beg"></td>
+                <td id="sigma_end"></td>
+                <td id="sigma_cumPnl"></td>
+            </tr>
+            </tbody>
+        </table>
+        <div style="float: right;color: #8D8D8D;font-size: x-small">注：期现业务数据更新频率为周频，数据缺乏一定准确性。</div>
+    </fieldset>
+</div>
+<div class="layui-row" style="margin:10px;margin-top:10px">
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="totalPnlCashDelta" style="height:300px;"></div>
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="dailyPnlVar" style="height:300px;"></div>
+</div>
+<div class="layui-row" style="margin:10px;margin-top:10px">
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="totalFund" style="height:300px;"></div>
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="sectorFund" style="height:300px;"></div>
+</div>
+<div class="layui-row" style="margin:10px;margin-top:10px">
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="sigmaPnlCashDelta" style="height:300px;"></div>
+</div>
+<div class="layui-row" style="margin:10px;margin-top:10px">
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="otcPnlCashDelta" style="height:300px;"></div>
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="otcFund" style="height:300px;"></div>
+    <p style="text-align: right">注：场外业务收取保证金规模约<span id="otcMargin"></span>亿元</p>
+</div>
+<div class="layui-row" style="margin:10px;margin-top:10px">
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="cPnlCashDelta" style="height:300px;"></div>
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="cFund" style="height:300px;"></div>
+</div>
+<div class="layui-row" style="margin:10px;margin-top:10px">
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="ommPnlCashDelta" style="height:300px;"></div>
+    <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="ommFund" style="height:300px;"></div>
+</div>
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+
+<script>
+    layui.use(['table', 'laydate', 'form', 'jquery'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+
+        //日期搜索
+        laydate.render({
+            elem: '#riskDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+        //日期搜索
+        laydate.render({
+            elem: '#dataDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+
+    {#      pie#}
+    var otcFund = echarts.init(document.getElementById('otcFund'));
+    var otcFundOption = {
+    title: {
+        text: "银河德睿场外业务占用资金规模分布",
+        left: "center",
+        top: "top",
+        textStyle: {
+          fontSize: 14,
+          fontWeight: "bold",
+        },
+    },
+    tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    series: [
+        {
+            startAngle: 150,
+            name: '占用资金规模',
+            type: 'pie',
+            radius: ['15%', '55%'],
+            avoidLabelOverlap: true,
+            label: {
+                show: true,
+                formatter: '{b}: {c}亿元 ({d}%)'
+            },
+            labelLine: {
+                  length: 15,
+                  length2: 10,
+                },
+
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            },
+
+            data: [1,2,3],
+        }
+    ]
+};
+
+    {#    line#}
+    var totalFund = echarts.init(document.getElementById('totalFund'));
+    var totalFundOption = {
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        title: {
+            text: "整体占用资金规模",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        grid: {
+            x: 55,
+        },
+        tooltip: {
+            trigger: 'axis'
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+        {
+            name: '合计占用资金规模',
+            type: 'line',
+            data: [],
+        }
+        ]
+    };
+    var cFund = echarts.init(document.getElementById('cFund'));
+    var cFundOption = {
+        title: {
+            text: "期现业务占用资金规模",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+
+        legend: {
+            data: ['期现业务占用资金规模', '期现基差类业务占用资金规模','期现融资类业务占用资金规模'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '期现业务占用资金规模',
+                type: 'line',
+                data: []
+            },
+            {
+                name: '期现基差类业务占用资金规模',
+                type: 'line',
+                data: []
+            },
+            {
+                name: '期现融资类业务占用资金规模',
+                type: 'line',
+                data: []
+            },
+        ]
+    };
+    var ommFund = echarts.init(document.getElementById('ommFund'));
+    var ommFundOption = {
+        title: {
+            text: "做市业务占用资金规模",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['做市业务占用资金规模', '期货做市占用资金规模','期权做市占用资金规模'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '做市业务占用资金规模',
+                type: 'line',
+                data: []
+            },
+            {
+                name: '期货做市占用资金规模',
+                type: 'line',
+                data: []
+            },
+            {
+                name: '期权做市占用资金规模',
+                type: 'line',
+                data: []
+            },
+        ]
+    };
+
+    {#    lineBar#}
+    var totalPnlCashDelta = echarts.init(document.getElementById('totalPnlCashDelta'));
+    var totalPnlCashDeltaOption = {
+        title: {
+            text: "整体业务敞口和年内累计盈亏",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+
+        legend: {
+            data: ['整体敞口', '整体盈亏'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '整体敞口',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '整体盈亏',
+                type: 'line',
+                data: []
+            }
+        ]
+    };
+    var dailyPnlVar = echarts.init(document.getElementById('dailyPnlVar'));
+    var dailyPnlVarOption = {
+        title: {
+            text: "整体业务当日盈亏和VaR",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['当日盈亏','VaR(1D,95%)'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '当日盈亏',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: 'VaR(1D,95%)',
+                type: 'line',
+                data: []
+            }
+        ]
+    };
+    var sectorFund = echarts.init(document.getElementById('sectorFund'));
+    var sectorFundOption = {
+        title: {
+            text: "各项业务占用资金与累计盈亏情况",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['资金占用', '累计盈利'],
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                  fontSize: 12
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                name: '占用资金（亿元）',
+                axisLabel: {
+                    formatter: '{value}'
+                },
+
+            },
+            {
+                type: 'value',
+                name: '累计盈利（万元）',
+                axisLabel: {
+                    formatter: '{value}'
+                },
+            }
+        ],
+        series: [
+            {
+                name: '资金占用',
+                type: 'bar',
+                data: [],
+                barWidth: 40
+            },
+            {
+                name: '累计盈利',
+                type: 'line',
+                yAxisIndex: 1,
+                data: []
+            }
+        ]
+    };
+    var sigmaPnlCashDelta = echarts.init(document.getElementById('sigmaPnlCashDelta'));
+    var sigmaPnlCashDeltaOption = {
+        title: {
+            text: "波动率策略敞口和年内累计盈亏",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['波动率策略敞口', '波动率策略盈亏'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            },
+        ],
+        series: [
+            {
+                name: '波动率策略敞口',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '波动率策略盈亏',
+                type: 'line',
+                data: []
+            }
+        ]
+    };
+    var otcPnlCashDelta = echarts.init(document.getElementById('otcPnlCashDelta'));
+    var otcPnlCashDeltaOption = {
+        title: {
+            text: "场外业务敞口和年内累计盈亏",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['场外业务敞口', '场外业务盈亏'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '场外业务敞口',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '场外业务盈亏',
+                type: 'line',
+                data: []
+            }
+        ]
+    };
+    var cPnlCashDelta = echarts.init(document.getElementById('cPnlCashDelta'));
+    var cPnlCashDeltaOption = {
+        title: {
+            text: "期现业务敞口和年内累计盈亏",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['期现业务敞口', '期现业务盈亏'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '期现业务敞口',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '期现业务盈亏',
+                type: 'line',
+                data: []
+            }
+        ]
+    };
+    var ommPnlCashDelta = echarts.init(document.getElementById('ommPnlCashDelta'));
+    var ommPnlCashDeltaOption = {
+        title: {
+            text: "做市业务敞口和年内累计盈亏",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        toolbox: {
+            show: true,
+            feature: {
+                dataZoom: {
+                    yAxisIndex: 'none'
+                },
+                dataView: {readOnly: false},
+                magicType: {type: ['line', 'bar']},
+                restore: {},
+                saveAsImage: {}
+            }
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+        legend: {
+            data: ['做市业务敞口', '做市业务盈亏'],
+            top: "7%",
+            left: "2%"
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: [],
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            }
+        ],
+        series: [
+            {
+                name: '做市业务敞口',
+                type: 'bar',
+                data: []
+            },
+            {
+                name: '做市业务盈亏',
+                type: 'line',
+                data: []
+            }
+        ]
+    };
+
+
+    // 监听搜索操作
+    form.on('submit(checkRisk)', function (data) {
+        $.ajax({
+            url: "/fxglb/checkDeruiSector?date=" + data.field.riskDate,
+            success: function (res) {
+                console.log(res)
+                if (res.code == 0) {
+                    let data = res.data
+                    document.getElementById("total_limit").innerHTML = data.total_limit;
+                    document.getElementById("total_d").innerHTML = data.total_d;
+                    document.getElementById("total_beg").innerHTML = data.total_beg;
+                    document.getElementById("total_cumPnl").innerHTML = data.total_cumPnl;
+                    document.getElementById("total_end").innerHTML = data.total_end;
+
+                    document.getElementById("otc_limit").innerHTML = data.otc_limit;
+                    document.getElementById("otc_d").innerHTML = data.otc_d;
+                    document.getElementById("otc_beg").innerHTML = data.otc_beg;
+                    document.getElementById("otc_cumPnl").innerHTML = data.otc_cumPnl;
+                    document.getElementById("otc_end").innerHTML = data.otc_end;
+
+                    document.getElementById("omm_limit").innerHTML = data.omm_limit;
+                    document.getElementById("omm_d").innerHTML = data.omm_d;
+                    document.getElementById("omm_beg").innerHTML = data.omm_beg;
+                    document.getElementById("omm_cumPnl").innerHTML = data.omm_cumPnl;
+                    document.getElementById("omm_end").innerHTML = data.omm_end;
+
+                    document.getElementById("c_limit").innerHTML = data.c_limit;
+                    document.getElementById("c_d").innerHTML = data.c_d;
+                    document.getElementById("c_beg").innerHTML = data.c_beg;
+                    document.getElementById("c_cumPnl").innerHTML = data.c_cumPnl;
+                    document.getElementById("c_end").innerHTML = data.c_end;
+
+                    document.getElementById("sigma_limit").innerHTML = data.sigma_limit;
+                    document.getElementById("sigma_d").innerHTML = data.sigma_d;
+                    document.getElementById("sigma_beg").innerHTML = data.sigma_beg;
+                    document.getElementById("sigma_cumPnl").innerHTML = data.sigma_cumPnl;
+                    document.getElementById("sigma_end").innerHTML = data.sigma_end;
+                }
+            }
+        })
+        $.ajax({
+            url: "/fxglb/checkDeruiSectorEchartsView?date=" + data.field.riskDate,
+            success: function (res) {
+                console.log(res)
+                if (res.code == 2000) {
+                    let data = res.data
+                    totalPnlCashDeltaOption.xAxis[0].data = data.date;
+                    totalPnlCashDeltaOption.series[0].data = data.exposure;
+                    totalPnlCashDeltaOption.series[1].data = data.pnl;
+                    totalPnlCashDelta.setOption(totalPnlCashDeltaOption);
+
+                    dailyPnlVarOption.xAxis[0].data = data.date;
+                    dailyPnlVarOption.series[0].data = data.dailyPnlList;
+                    dailyPnlVarOption.series[1].data = data.varList;
+                    dailyPnlVar.setOption(dailyPnlVarOption);
+
+                    sectorFundOption.xAxis[0].data = ['场外业务', '做市业务', '自营业务', '期现业务'];
+                    sectorFundOption.series[0].data = data.daySectorFund;
+                    sectorFundOption.series[1].data = data.daySectorPnl;
+                    sectorFund.setOption(sectorFundOption);
+
+                    sigmaPnlCashDeltaOption.xAxis[0].data = data.date;
+                    sigmaPnlCashDeltaOption.series[0].data = data.sigmaCashDelta_vol;
+                    sigmaPnlCashDeltaOption.series[1].data = data.sigmaPnl_vol;
+                    sigmaPnlCashDelta.setOption(sigmaPnlCashDeltaOption);
+
+                    otcPnlCashDeltaOption.xAxis[0].data = data.date;
+                    otcPnlCashDeltaOption.series[0].data = data.otcCashDelta;
+                    otcPnlCashDeltaOption.series[1].data = data.otcPnl;
+                    otcPnlCashDelta.setOption(otcPnlCashDeltaOption);
+
+                    cPnlCashDeltaOption.xAxis[0].data = data.date;
+                    cPnlCashDeltaOption.series[0].data = data.cCashDelta;
+                    cPnlCashDeltaOption.series[1].data = data.cPnl;
+                    cPnlCashDelta.setOption(cPnlCashDeltaOption);
+
+                    ommPnlCashDeltaOption.xAxis[0].data = data.date;
+                    ommPnlCashDeltaOption.series[0].data = data.ommCashDelta;
+                    ommPnlCashDeltaOption.series[1].data = data.ommPnl;
+                    ommPnlCashDelta.setOption(ommPnlCashDeltaOption);
+
+                    totalFundOption.xAxis[0].data = data.date;
+                    totalFundOption.series[0].data = data.fund;
+                    totalFund.setOption(totalFundOption);
+
+                    cFundOption.xAxis[0].data = data.date;
+                    cFundOption.series[0].data = data.cAmt;
+                    cFundOption.series[1].data = data.cAmt_basic;
+                    cFundOption.series[2].data = data.cAmt_fund;
+                    cFund.setOption(cFundOption);
+                    ommFundOption.xAxis[0].data = data.date;
+                    ommFundOption.series[0].data = data.ommAmt;
+                    ommFundOption.series[1].data = data.ommAmt_fut;
+                    ommFundOption.series[2].data = data.ommAmt_opt;
+                    ommFund.setOption(ommFundOption);
+
+                    otcFundOption.series[0].data = [
+                        {value: data.otcAmt_comm_fund, name: '商品'},
+                        {value: data.otcAmt_fin_fund, name: '金融'},
+                        {value: data.otcAmt_other_fund, name: '其他'},
+                    ];
+                    otcFund.setOption(otcFundOption);
+
+                    document.getElementById("otcMargin").innerHTML = data.otcMargin;
+                }
+            }
+        });
+    });
+});
+</script>
+
+{#菜单#}
+<script>
+    layui.use('element', function () {
+        var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+        //监听导航点击
+        element.on('nav(demo)', function (elem) {
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+    });
+</script>
+
+</body>
+</html>

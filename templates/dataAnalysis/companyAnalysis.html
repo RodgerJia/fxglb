@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>数据分析-公司业务分析</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+</head>
+<body>
+
+{# 菜单 #}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+    <img src="/static/layui/images/newlogo.gif"/>
+    <li class="layui-nav-item"><a href="../">主页</a></li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">每日基金数据录入</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+            <dd><a href="../add/newproduct">新审批产品</a></dd>
+            <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+            <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+            <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+            <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">报表查询</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+            <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+            <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+            <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">定期报告</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+            <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+            <dd><a href="">月报</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item layui-this">
+        <a href="javascript:;">数据分析</a>
+        <dl class="layui-nav-child">
+            <dd class="layui-this"><a href="companyAnalysis">公司业务分析</a></dd>
+            <dd><a href="deruiSectorAnalysis">德睿业务分析</a></dd>
+        </dl>
+    </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>数据分析-公司业务分析</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    公司业务分析
+    <br>*公司业务分析
+</blockquote>
+
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">报送信息</legend>
+    <div class="layui-field-box">
+        <div class="layui-upload">
+          <button type="button" class="layui-btn layui-btn-normal" id="testList">选择多文件</button>
+          <div class="layui-upload-list">
+            <table class="layui-table">
+              <thead>
+                <tr><th>文件名</th>
+                <th>大小</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr></thead>
+              <tbody id="demoList"></tbody>
+            </table>
+          </div>
+          <button type="button" class="layui-btn" id="testListAction">开始上传</button>
+        </div>
+    </div>
+</fieldset>
+
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">报送数据校验</legend>
+    <div class="layui-form" style="padding: 10px" >
+    {% csrf_token %}
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">数据日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="searchDate" id="searchDate" placeholder="请选择日期" autocomplete="off" />
+            </div>
+            <button type="submit" class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="searchBtn">核对数据</button>
+        </div>
+    </div>
+</div>
+</fieldset>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+{# 菜单 #}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+{# 上传文件数据 #}
+<script>
+layui.use([ 'jquery'], function () {
+
+    var $ = layui.jquery;
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+    })
+})
+</script>
+<script>
+layui.use('upload', function(){
+  var $ = layui.jquery
+  ,upload = layui.upload;
+
+  //多文件列表示例
+  var demoListView = $('#demoList')
+  ,uploadListIns = upload.render({
+    elem: '#testList'
+    ,url: '../postSctorFundResult' //改成您自己的上传接口
+    ,accept: 'file'
+    ,multiple: true
+    ,auto: false
+    ,bindAction: '#testListAction'
+    ,choose: function(obj){
+      var files = this.files = obj.pushFile(); //将每次选择的文件追加到文件队列
+      //读取本地文件
+      obj.preview(function(index, file, result){
+        var tr = $(['<tr id="upload-'+ index +'">'
+          ,'<td>'+ file.name +'</td>'
+          ,'<td>'+ (file.size/1024).toFixed(1) +'kb</td>'
+          ,'<td>等待上传</td>'
+          ,'<td>'
+            ,'<button class="layui-btn layui-btn-xs demo-reload layui-hide">重传</button>'
+            ,'<button class="layui-btn layui-btn-xs layui-btn-danger demo-delete">删除</button>'
+          ,'</td>'
+        ,'</tr>'].join(''));
+
+        //单个重传
+        tr.find('.demo-reload').on('click', function(){
+          obj.upload(index, file);
+        });
+
+        //删除
+        tr.find('.demo-delete').on('click', function(){
+          delete files[index]; //删除对应的文件
+          tr.remove();
+          uploadListIns.config.elem.next()[0].value = ''; //清空 input file 值，以免删除后出现同名文件不可选
+        });
+
+        demoListView.append(tr);
+      });
+    }
+    ,done: function(res, index, upload){
+      if(res.files.file){ //上传成功
+        var tr = demoListView.find('tr#upload-'+ index)
+        ,tds = tr.children();
+        tds.eq(2).html('<span style="color: #5FB878;">上传成功</span>');
+        tds.eq(3).html(''); //清空操作
+        return delete this.files[index]; //删除文件队列已经上传成功的文件
+      }
+      this.error(index, upload);
+    }
+    ,error: function(index, upload){
+      var tr = demoListView.find('tr#upload-'+ index)
+      ,tds = tr.children();
+      tds.eq(2).html('<span style="color: #FF5722;">上传失败</span>');
+      tds.eq(3).find('.demo-reload').removeClass('layui-hide'); //显示重传
+    }
+  });
+});
+</script>
+{#对应数据#}
+<script>
+    layui.use(['form', 'table', 'laydate'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+        var laydate = layui.laydate;
+        //执行一个laydate实例
+        laydate.render({
+            elem: '#searchDate' //指定元素
+        });
+
+{# 表格 #}
+    var tableIns = table.render({
+        elem: '#specialCreidt'
+        , url: '/fxglb/getSpecialCreidtInfo'
+        , title: '特殊授信表'
+        , parseData: function (res) { //res 即为原始返回的数据
+            console.log(res.data.specialCreditData)
+            specialCreditData = res.data.specialCreditData;
+            return {
+                "code": 0, //解析接口状态
+                "msg": "", //解析提示文本
+                "count": res.data.total, //解析数据长度
+                "data": res.data.specialCreditData //解析数据列表
+            };
+        }
+        , cols: [[
+              {field:"sector", title: '业务类别', align: 'center', width: '20%', }
+             ,{field:"name", title: '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;客户名称&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;', align: 'center',width: '45.5%',}
+             ,{field:"amt", title: '额度&#8197;', align: 'center',width: '15%', }
+             ,{field:"deadline", title: '&emsp;有效期&emsp;', align: 'center',width: '20%', }
+        ]]
+    });
+
+    // 监听搜索操作
+    form.on('submit(searchBtn)', function (data) {
+        $.ajax({
+            url: "/fxglb/checkFundResult?date="+data.field.searchDate,
+            success: function (res) {
+                console.log(res)
+                if(res.code==2000){
+                    let data = res.data
+
+                    document.getElementById("date").innerText=data[0].date;
+                    document.getElementById("reportDate").innerText=data[0].reportDate;
+                    document.getElementById("num").innerText=data[0].year + '年第'+data[0].yearNum+'期  总第'+data[0].totalNum+'期';
+
+                }
+            }
+        })
+    });
+
+    });
+</script>
+
+</body>
+</html>

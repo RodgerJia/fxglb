@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>合并报表统计</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+      <dd><a href="../add/newproduct">新审批产品</a></dd>
+      <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+      <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+      <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item layui-this">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd class="layui-this"><a href="combinedStat">合并报表统计</a></dd>
+      <dd><a href="productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>报表查询-合并报表统计</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    合并报表统计
+    <br>*上传日报内数据表后可自动生成
+    <br>*与日报数据一致
+</blockquote>
+
+
+<div class="layui-form">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">查询日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="searchDate" id="searchDate" placeholder="请选择日期" autocomplete="off" />
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="searchBtn">生成报告</button>
+        </div>
+    </div>
+</div>
+<div style="padding-left: 50px;width: 80%" class="layui-form" lay-filter="myForm">
+    <div style="color: #c10000;font-weight: bold">注：务必记得修改并表文件内日期</div>
+        <table class="layui-table" >
+                <colgroup>
+                  <col width="50">
+                  <col width="100">
+                  <col width="300">
+                  <col width="100">
+                  <col width="200">
+                  <col width="200">
+                  <col>
+                </colgroup>
+                <thead>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">序号</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">核算主体</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">指标名称</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">指标编号</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">指标值</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">备注</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>银河期货</td>
+                    <td>净资本</td>
+                    <td>4001</td>
+                    <td id="netEquity"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>银河期货</td>
+                    <td>净资产</td>
+                    <td>4002</td>
+                    <td id="netAsset"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>银河期货</td>
+                    <td>净资本/净资产</td>
+                    <td>4003</td>
+                    <td id="netEAratio"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>银河期货</td>
+                    <td>风险资本准备总额</td>
+                    <td>4004</td>
+                    <td id="riskCapital"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>5</td>
+                    <td>银河期货</td>
+                    <td>风险覆盖率</td>
+                    <td>4005</td>
+                    <td id="coverRatio"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>6</td>
+                    <td>银河期货</td>
+                    <td>自有资金投资公募、私募及公司资管产品VAR</td>
+                    <td>4006</td>
+                    <td id="productVaR"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>7</td>
+                    <td>银河期货</td>
+                    <td>自有资金投资公募、私募及公司资管产品总规模</td>
+                    <td>4007</td>
+                    <td id="productAmt"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>8</td>
+                    <td>银河期货</td>
+                    <td>自有资金投资单只公募、私募或公司资管产品规模</td>
+                    <td>4008</td>
+                    <td id="productSingleAmt"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>9</td>
+                    <td>银河期货</td>
+                    <td>自有资金投资公募、私募及公司资管产品当年盈亏</td>
+                    <td>4009</td>
+                    <td id="productPnl"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>10</td>
+                    <td>银河期货</td>
+                    <td>自有资金投资公募、私募及公司资管产品压力损失</td>
+                    <td>4010</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+
+                  <tr>
+                    <td>11</td>
+                    <td>银河德睿</td>
+                    <td>银河德睿场外业务未平仓交易名义本金规模</td>
+                    <td>4011</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>12</td>
+                    <td>银河德睿</td>
+                    <td>银河德睿做市业务投资占用资金规模</td>
+                    <td>4012</td>
+                    <td id="ommAmt"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>13</td>
+                    <td>银河德睿</td>
+                    <td>银河德睿年度投资损失</td>
+                    <td>4013</td>
+                    <td id="totalInvestPnl"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>14</td>
+                    <td>银河德睿</td>
+                    <td>银河德睿场外衍生品业务占用资金规模</td>
+                    <td>4014</td>
+                    <td id="otcAmt"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>15</td>
+                    <td>银河德睿</td>
+                    <td>权益类（含其对应衍生品）敞口（Delta金额）</td>
+                    <td>4015</td>
+                    <td id="equityCashDelta"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>16</td>
+                    <td>银河德睿</td>
+                    <td>权益类（含其对应衍生品）VAR（1d，95%）</td>
+                    <td>4016</td>
+                    <td id="equityVar"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>17</td>
+                    <td>银河德睿</td>
+                    <td>权益类（含其对应衍生品）当年盈亏</td>
+                    <td>4017</td>
+                    <td id="equityPnl"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>18</td>
+                    <td>银河德睿</td>
+                    <td>权益类（含其对应衍生品）压力损失</td>
+                    <td>4018</td>
+                    <td id="equityLoss"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>19</td>
+                    <td>银河德睿</td>
+                    <td>非权益类（含其对应衍生品）敞口（Delta金额）</td>
+                    <td>4019</td>
+                    <td id="nonEquityCashDelta"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>20</td>
+                    <td>银河德睿</td>
+                    <td>非权益类（含其对应衍生品）VAR（1d，95%）</td>
+                    <td>4020</td>
+                    <td id="nonEquityVar"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>21</td>
+                    <td>银河德睿</td>
+                    <td>非权益类（含其对应衍生品）当年盈亏</td>
+                    <td>4021</td>
+                    <td id="nonEquityPnl"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>22</td>
+                    <td>银河德睿</td>
+                    <td>非权益类（含其对应衍生品）压力损失</td>
+                    <td>4022</td>
+                    <td id="nonEquityLoss"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>23</td>
+                    <td>银河德睿</td>
+                    <td>公司整体敞口（Delta金额）</td>
+                    <td>4023</td>
+                    <td id="totalCashDelta"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>24</td>
+                    <td>银河德睿</td>
+                    <td>公司整体VAR（1d，95%）</td>
+                    <td>4024</td>
+                    <td id="totalVar"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>25</td>
+                    <td>银河德睿</td>
+                    <td>公司整体当年盈亏</td>
+                    <td>4025</td>
+                    <td id="totalPnl"></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>26</td>
+                    <td>银河德睿</td>
+                    <td>公司整体压力损失</td>
+                    <td>4026</td>
+                    <td id="totalLoss"></td>
+                    <td></td>
+                  </tr>
+
+                </tbody>
+      </table>
+    </div>
+</div>
+
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+
+
+{#表格#}
+<script>
+    layui.use(['table', 'laydate', 'form', 'jquery'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var projectList = []
+
+        //日期搜索
+        laydate.render({
+            elem: '#searchDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+
+
+        //监听提交
+        form.on('submit(searchBtn)', function (data) {
+            $.ajax({
+                url: "/fxglb/getCombinedStat?date=" + data.field.searchDate,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 2000) {
+                        let data = res.data
+                        document.getElementById("netEquity").innerHTML = '<span>' + data[0].netEquity + '</span>';
+                        document.getElementById("netAsset").innerHTML = '<span>' + data[0].netAsset + '</span>';
+                        document.getElementById("netEAratio").innerHTML = '<span>' + data[0].netEAratio + '%</span>';
+                        document.getElementById("riskCapital").innerHTML = '<span>' + data[0].riskCapital + '</span>';
+                        document.getElementById("coverRatio").innerHTML = '<span>' + data[0].coverRatio + '%</span>';
+
+                        document.getElementById("productVaR").innerHTML = '<span>' + data[0].productVaR + '</span>';
+                        document.getElementById("productAmt").innerHTML = '<span>' + data[0].productAmt + '</span>';
+                        document.getElementById("productSingleAmt").innerHTML = '<span>' + data[0].productSingleAmt + '</span>';
+                        document.getElementById("productPnl").innerHTML = '<span>' + data[0].yearPnl + '</span>';
+
+                        document.getElementById("ommAmt").innerHTML = '<span>' + data[0].ommAmt + '</span>';
+                        document.getElementById("totalInvestPnl").innerHTML = '<span>' + data[0].totalInvestPnl + '</span>';
+                        document.getElementById("otcAmt").innerHTML = '<span>' + data[0].otcAmt + '</span>';
+
+                        document.getElementById("equityCashDelta").innerHTML = '<span>' + data[0].equityCashDelta + '</span>';
+                        document.getElementById("equityVar").innerHTML = '<span>' + data[0].equityVar + '</span>';
+                        document.getElementById("equityPnl").innerHTML = '<span>' + data[0].equityPnl + '</span>';
+                        document.getElementById("equityLoss").innerHTML = '<span>' + data[0].equityLoss + '</span>';
+                        document.getElementById("nonEquityCashDelta").innerHTML = '<span>' + data[0].nonEquityCashDelta + '</span>';
+                        document.getElementById("nonEquityVar").innerHTML = '<span>' + data[0].nonEquityVar + '</span>';
+                        document.getElementById("nonEquityPnl").innerHTML = '<span>' + data[0].nonEquityPnl + '</span>';
+                        document.getElementById("nonEquityLoss").innerHTML = '<span>' + data[0].nonEquityLoss + '</span>';
+
+                        document.getElementById("totalCashDelta").innerHTML = '<span>' + data[0].totalCashDelta + '</span>';
+                        document.getElementById("totalVar").innerHTML = '<span>' + data[0].totalVar + '</span>';
+                        document.getElementById("totalPnl").innerHTML = '<span>' + data[0].totalPnl + '</span>';
+                        document.getElementById("totalLoss").innerHTML = '<span>' + data[0].totalLoss + '</span>';
+                    }
+                }
+            })
+    });
+});
+</script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+</body>
+</html>

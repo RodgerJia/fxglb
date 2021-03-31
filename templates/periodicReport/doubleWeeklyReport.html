@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>定期报告-双周报</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+      <dd><a href="../add/newproduct">新审批产品</a></dd>
+      <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+      <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+      <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item layui-this">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="dailyReport">日报</a></dd>
+      <dd class="layui-this"><a href="doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>定期报告-双周报</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    根据已有数据，自动生成双周报
+    <br>*双周报数据不回滚
+</blockquote>
+
+
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">公司及子公司风险状况</legend>
+    <div class="layui-field-box">
+        <form class="layui-form layui-form-wd120" action="/fxglb/addDoubleWeeklyData" method="post">
+            {% csrf_token %}
+            <div class="layui-form-item">
+                <div class="layui-inline layui-col-md12">
+                    <label class="layui-form-label">数据日期</label>
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input" name="dataDate" id="dataDate" placeholder="请选择日期" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">追保次数</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="marginCall" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">强平手数</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="closePos" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3" style="margin-left: -10px;margin-right: -10px">
+                    <label class="layui-form-label">当期新增穿仓损失</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="overLoss" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3" style="margin-left: -10px">
+                    <label class="layui-form-label">年度累计穿仓损失</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="yearOverLoss" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-col-md6">
+                    <label class="layui-form-label">风险监管指标</label>
+                    <div class="layui-input-block">
+                        <textarea placeholder="公司各项风险监管指标均运行平稳，优于监管标准" class="layui-textarea" name="riskSupText" style="height: 120px;width:80%;margin-bottom: 10px"></textarea>
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <label class="layui-form-label">董事会风险授权</label>
+                    <div class="layui-input-block">
+                        <textarea placeholder="公司及子公司各项业务均在董事会授权范围内有序开展" class="layui-textarea" name="authText" style="height: 120px; width:80%; margin-bottom: 10px"></textarea>
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <label class="layui-form-label">风险限额指标</label>
+                    <div class="layui-input-block">
+                        <textarea placeholder="公司L1\L2限额执行良好，未发生超限事项" class="layui-textarea" name="limitText" style="height: 120px; width:80%; margin-bottom: 10px"></textarea>
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <label class="layui-form-label">重大风险事件</label>
+                    <div class="layui-input-block">
+                        <textarea placeholder="公司及子公司当期未发生重大风险事件" class="layui-textarea" name="importantRiskText" style="height: 120px; width:80%; margin-bottom: 10px"></textarea>
+                    </div>
+                </div>
+                <div class="layui-col-md12">
+                    <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="saveBtn" style="margin-left: 110px">保存数据</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</fieldset>
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">报表生成</legend>
+    <div class="layui-form" style="padding: 10px" >
+    {% csrf_token %}
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">数据日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="searchDate" id="searchDate" placeholder="请选择日期" autocomplete="off" />
+            </div>
+            <button type="submit" class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="searchBtn">生成日报</button>
+            <button class="layui-btn  layui-btn-normal" id="exportToPdf">导出日报</button>
+        </div>
+    </div>
+</div>
+</fieldset>
+
+<div style="padding: 20px; background-color: #F2F2F2;" class="layui-form" lay-filter="myForm">
+  <div class="layui-row" style= "width: 800px; margin-left:auto;margin-right:auto;" id="export_content">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header" style="font-size: x-large;font-weight: bolder">
+                银河期货风险监测双周报
+        </div>
+
+        <div class="layui-card-body">
+{#            标题信息#}
+            <div style="float: left;color: #8D8D8D;margin-top: -8px">
+                数据日期  <span id="date"></span>
+                <br>报告日期  <span id="reportDate"></span>
+            </div>
+            <div style="float: right;color: #8D8D8D;margin-top: -8px">
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;报告编制：风险管理部
+                <br><span id="num" style="float: right"></span>
+            </div>
+            <hr style="background-color:#c10000;height:2px !important;">
+            <div style="float: right">
+                报告统一单位：万元
+            </div>
+            <br>
+{#            公司及子公司风险状况#}
+            <fieldset class="layui-elem-field layui-field-title">
+                <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 公司及子公司风险状况</legend>
+            </fieldset>
+             <div class="layui-col-xs12 layui-col-sm12 layui-col-md12" >
+                <div id="importantText" style="height: 120px;width: 90%; margin-left: 30px;margin-top: -10px;margin-bottom: 10px;"></div>
+            </div>
+{#            监管指标 三个仪表盘#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 风险监管指标</legend>
+            </fieldset>
+            <div class="layui-row">
+                <div class="layui-col-xs4 layui-col-sm4 layui-col-md4" id="gauge1" style="height:280px;margin-bottom: -100px"></div>
+                <div class="layui-col-xs4 layui-col-sm4 layui-col-md4" id="gauge2" style="height:280px;margin-bottom: -100px"></div>
+                <div class="layui-col-xs4 layui-col-sm4 layui-col-md4" id="gauge3" style="height:280px;margin-bottom: -100px"></div>
+            </div>
+
+{#            公司风险概况#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河期货风险情况</legend>
+            </fieldset>
+            <div class="layui-row" style="margin-left: 30px">
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 经纪业务</div>
+                    <div style="margin-right: 25px;margin-bottom: 10px!important;">
+                        <table class="layui-table"  lay-skin="nob" lay-even="">
+                          <tr>
+                              <td width ='60%'>追保情况（次）</td>
+                              <td width ='40%' align="center" id="marginCall"></td>
+                          </tr>
+                          <tr>
+                              <td width ='60%'>强平情况（手）</td>
+                              <td width ='40%' align="center" id="closePos"></td>
+                          </tr>
+                            <tr>
+                              <td>当期新增穿仓损失</td>
+                                <td align="center" id="overLoss"></td>
+                            </tr>
+                            <tr>
+                              <td>年度累计穿仓损失</td>
+                                <td align="center" id="yearOverLoss"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div class="layui-col-xs6 layui-col-sm6 layui-col-md6">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 资管业务</div>
+                    <div style="margin-right: 10px;margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="nob" lay-even="">
+                          <tbody>
+                          <tr>
+                              <td width ='70%'>产品总规模</td>
+                              <td width ='30%' align="center" id="totalAmount"></td>
+                          </tr>
+                            <tr>
+                              <td>自主管理产品规模</td>
+                                <td align="center" id="selfAmount"></td>
+                            </tr>
+                            <tr>
+                              <td>触及预警线产品数量（只）</td>
+                                <td align="center" id="alertNum"></td>
+                            </tr>
+                            <tr>
+                              <td>触及清盘线及清盘产品数量（只）</td>
+                                <td align="center" id="cleanNum"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 自有资金投资</div>
+                    <div style="margin-left: -20px;margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="row" >
+                            <thead>
+                            <tr>
+                                <th width ='13%' style="background-color: #1351a0;"></th>
+                                <th colspan="2" width ='24%' style="background-color: #1351a0; color: white; font-weight: bold; text-align: center">规模</th>
+                                <th width ='20%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">在投产品数量（只）</th>
+                                <th colspan="2" width ='24%' style="background-color: #1351a0; color: white; font-weight: bold; text-align: center">当年盈亏</th>
+                            </tr>
+                            <tr>
+                                <th width ='13%' style="background-color: #1351a0;"></th>
+                                <th width ='15%' align="center" style="background-color: #c6ddfc; font-weight: bold; text-align: center">限额值</th>
+                                <th width ='15%' align="center" style="background-color: #c6ddfc; font-weight: bold; text-align: center">指标值</th>
+                                <th width ='15%' align="center" style="background-color: #c6ddfc; font-weight: bold; text-align: center">指标值</th>
+                                <th width ='15%' align="center" style="background-color: #c6ddfc; font-weight: bold; text-align: center">限额值</th>
+                                <th width ='15%' align="center" style="background-color: #c6ddfc; font-weight: bold; text-align: center">指标值</th>
+                            </tr>
+                            </thead>
+                          <tbody>
+                          <tr>
+                              <td width ='13%' style="background-color: #c6ddfc; font-weight: bold">自有资金投资产品</td>
+                              <td width ='15%' align="center">35000</td>
+                              <td width ='15%' align="center" id="productAmt"></td>
+                              <td width ='15%' align="center" id="productNum"></td>
+                              <td width ='15%' align="center">-3720</td>
+                              <td width ='13%' align="center" id="yearPnl"></td>
+                          </tr>
+                            <tr>
+                              <td style="background-color: #c6ddfc; font-weight: bold">自有资金现金管理</td>
+                              <td align="center">150000</td>
+                              <td align="center" id="cashAmt"></td>
+                              <td align="center" id="cashNum"></td>
+                              <td align="center">--</td>
+                              <td align="center" id="cashYearPnl"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                    <div style="font-size: 8px; margin-left: -15px">
+                        注：1.此处计算口径为已确认份额产品
+                    </div>
+                </div>
+            </div>
+{#            德睿风险概况#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河德睿风险情况</legend>
+            </fieldset>
+            <div class="layui-row" >
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <div style="margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="row">
+                            <thead>
+                            <tr>
+                                <th style="width: 11.5%;background-color: #1351a0;"></th>
+                                <th colspan="2" align="center" style="width: 24.5%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">占用资金规模</th>
+                                <th colspan="2" style="width: 24.5%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">敞口（cash delta）</th>
+                                <th colspan="2" style="width: 24.5%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">VaR（1d, 95%）</th>
+                                <th colspan="2" style="width: 24.5%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">当年盈亏</th>
+                            </tr>
+                            <tr>
+                                <th style="width: 11.5%;background-color: #1351a0;"></th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">授权值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">执行值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">授权值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">执行值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">授权值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">执行值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">授权值</th>
+                                <th align="center" style="width: 11%; text-align: center; background-color: #c6ddfc; font-weight: bold">执行值</th>
+                            </tr>
+                            </thead>
+                          <tbody>
+                          <tr>
+                              <td style="width: 14%;background-color: #c6ddfc;font-weight: bold">德睿整体</td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold">--</td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold" id="totalAmt"></td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold">198500</td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold" id="totalCashDelta"></td>
+
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold">4700</td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold" id="totalVar"></td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold">-12000</td>
+                              <td align="center" style="width: 11%; text-align: center;font-weight: bold" id="totalPnl"></td>
+                          </tr>
+                          <tr>
+                              <td style="width: 14%;background-color: #c6ddfc;font-weight: bold">产品投资</td>
+                              <td align="center" style="width: 11%; text-align: center;" rowspan="2">100000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="productInvestAmt"></td>
+                              <td align="center" style="width: 11%; text-align: center;">150000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="productCashDelta"></td>
+
+                              <td align="center" style="width: 11%; text-align: center;">7500</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="productVar"></td>
+                              <td align="center" style="width: 11%; text-align: center;">-3000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="productPnl"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 14%;background-color: #c6ddfc;font-weight: bold">自营业务</td>
+                              
+                              <td align="center" style="width: 11%; text-align: center;" id="sigmaAmt"></td>
+                              <td align="center" style="width: 11%; text-align: center;">10000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="sigmaCashDelta"></td>
+
+                              <td align="center" style="width: 11%; text-align: center;">500</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="sigmaVar"></td>
+                              <td align="center" style="width: 11%; text-align: center;">-800</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="sigmaPnl"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 14%;background-color: #c6ddfc;font-weight: bold">期现业务</td>
+                              <td align="center" style="width: 11%; text-align: center;">200000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="cAmt"></td>
+                              <td align="center" style="width: 11%; text-align: center;">10000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="cCashDelta"></td>
+
+                              <td align="center" style="width: 11%; text-align: center;">300</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="cVar"></td>
+                              <td align="center" style="width: 11%; text-align: center;">-1000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="cPnl"></td>
+                            </tr>
+                          <tr>
+                              <td style="width: 14%;background-color: #c6ddfc;font-weight: bold">做市业务</td>
+                              <td align="center" style="width: 11%; text-align: center;">150000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="ommAmt"></td>
+                              <td align="center" style="width: 11%; text-align: center;">12000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="ommCashDelta"></td>
+
+                              <td align="center" style="width: 11%; text-align: center;">400</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="ommVar"></td>
+                              <td align="center" style="width: 11%; text-align: center;">-1200</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="ommPnl"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 14%;background-color: #c6ddfc;font-weight: bold">场外业务</td>
+                              <td align="center" style="width: 11%; text-align: center;">150000</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="otcAmt"></td>
+                              <td align="center" style="width: 11%; text-align: center;">16500</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="otcCashDelta"></td>
+
+                              <td align="center" style="width: 11%; text-align: center;">500</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="otcVar"></td>
+                              <td align="center" style="width: 11%; text-align: center;">-1500</td>
+                              <td align="center" style="width: 11%; text-align: center;" id="otcPnl"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                    <div style="font-size: 8px; margin-left: 5px">
+                        注：做市业务当年盈亏包含预估做市返还<span id="ommBack"></span>万元
+                    </div>
+                </div>
+            </div>
+
+{#            德睿授信#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河德睿授信情况</legend>
+            </fieldset>
+            <div class="layui-row" >
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" >
+                    <div id="bar" style="height:350px;width:380px;"></div>
+                    <div style="width:350px;margin-top: -40px!important;">
+                        <table class="layui-table" lay-size="sm" lay-skin="nob" lay-even="">
+
+                          <tbody>
+                          <tr>
+                              <td width ='5%'>限额值</td>
+                              <td width ='8%' align="center">150,000</td>
+                              <td width ='11%' align="center">1,000,000</td>
+                          </tr>
+                            <tr>
+                              <td><span style="color: #c10000;margin-left: -7px">&#9632</span>审批值</td>
+                                <td align="center" id="l1_creditAmt_nonSecBank_usable"></td>
+                                <td align="center" id="l1_creditAmt_secBank_usable"></td>
+                            </tr>
+                            <tr>
+                              <td><span style="color: #022665;margin-left: -7px">&#9632</span>占用值</td>
+                                <td align="center" id="l1_creditAmt_nonSecBank_used"></td>
+                                <td align="center" id="l1_creditAmt_secBank_used"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" >
+                    <div id="bar2" style="height:350px;width:480px;margin-left: -40px"></div>
+                    <div style="width:420px;margin-top: -40px;margin-left: -40px!important;">
+                        <table class="layui-table" lay-size="sm" lay-skin="nob" lay-even="">
+
+                          <tbody>
+                          <tr>
+                              <td width ='40%' align="center">75,000</td>
+                              <td width ='30%' align="center">1,000,000</td>
+                                <td width ='25%' align="center">75,000</td>
+                          </tr>
+                            <tr>
+                                <td align="center" id="l2_otc_creditAmt_nonSecBank"></td>
+                                <td align="center" id="l2_otc_creditAmt_secBank"></td>
+                                <td align="center" id="l2_c_creditAmt_usable"></td>
+                            </tr>
+                            <tr>
+                                <td align="center" id="l2_otc_creditAmt_nonSecBank_used"></td>
+                                <td align="center" id="l2_otc_creditAmt_secBank_used"></td>
+                                <td align="center" id="l2_c_creditAmt_used"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-row" >
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <p style="font-size: 14px;font-weight: bold;margin-top: 10px;text-align: center">银河德睿特殊授信</p>
+                    <table class="layui-hide" id="specialCreidt"  lay-filter="specialCreidt"></table>
+                    <p style="font-size: 8px;">统计口径：1.不含日内授信；2.期现业务特殊授信高于2500万元；3.场外业务（非券商银行保险以及风险管理子公司）高于200万元</p>
+                </div>
+            </div>
+
+{#            页尾#}
+            <hr style="background-color:#c10000;height:2px !important;">
+            <div style="font-weight: bold">
+                &nbsp;&nbsp; 400-886-7799 &nbsp;&nbsp;&nbsp;&nbsp;www.yhqh.com.cn&nbsp;&nbsp;&nbsp;&nbsp;（内部资料，请勿外传）
+            </div>
+        </br>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+    .layui-table-cell{
+        height: auto;
+    }
+</style>
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+{#导出pdf#}
+<script src="https://cdn.bootcss.com/jspdf/1.5.3/jspdf.debug.js"></script>
+<script src="https://cdn.bootcss.com/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
+<script type="text/javascript">
+    var downPdf = document.getElementById("exportToPdf");
+    downPdf.onclick = function () {
+        html2canvas(
+                document.getElementById("export_content"),
+                {
+                    dpi: 172,//导出pdf清晰度
+                    onrendered: function (canvas) {
+                        var contentWidth = canvas.width;
+                        var contentHeight = canvas.height;
+
+                        //一页pdf显示html页面生成的canvas高度;
+                        var pageHeight = contentWidth / 592.28 * 841.89;
+                        //未生成pdf的html页面高度
+                        var leftHeight = contentHeight;
+                        //pdf页面偏移
+                        var position = 0;
+                        //html页面生成的canvas在pdf中图片的宽高（a4纸的尺寸[595.28,841.89]）
+                        var imgWidth = 595.28;
+                        var imgHeight = 592.28 / contentWidth * contentHeight;
+
+                        var pageData = canvas.toDataURL('image/jpeg', 1.0);
+                        var pdf = new jsPDF('', 'pt', 'a4');
+
+                        //有两个高度需要区分，一个是html页面的实际高度，和生成pdf的页面高度(841.89)
+                        //当内容未超过pdf一页显示的范围，无需分页
+                        if (leftHeight < pageHeight) {
+                            pdf.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                        } else {
+                            while (leftHeight > 0) {
+                                pdf.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight)
+                                leftHeight -= pageHeight;
+                                position -= 841.89;
+                                //避免添加空白页
+                                if (leftHeight > 0) {
+                                    pdf.addPage();
+                                }
+                            }
+                        }
+                        pdf.save('content.pdf');
+                    },
+                    //背景设为白色（默认为黑色）
+                    background: "#fff"
+                })
+    }
+</script>
+
+{#对应数据#}
+<script>
+    layui.use(['form', 'table', 'laydate'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+        var laydate = layui.laydate;
+
+        //执行一个laydate实例
+        laydate.render({
+            elem: '#searchDate' //指定元素
+        });
+        laydate.render({
+            elem: '#dataDate' //指定元素
+        });
+    {#柱状图 授信情况L1    #}
+    var bar = echarts.init(document.getElementById('bar'));
+    var usable = [2.0, 2.2]
+    var used = [2.0, 2.2]
+    var barOption = {
+            title: {
+                text: "银河德睿授信情况（L1）",
+                left: "center",
+                top: "top",
+                textStyle: {
+                  fontSize: 14,
+                  fontWeight: "bold",
+                },
+            },
+        grid:{
+            x:55,
+
+        },
+            xAxis: {
+                type: 'category',
+                data: ['非券商银行类客户', '券商银行类客户']
+            },
+            yAxis: {
+                type: 'value',
+            },
+            series: [
+            {
+                name: '审批值',
+                type: 'bar',
+                data: usable,
+                barWidth: 30,
+            },
+                {
+                name: '占用值',
+                type: 'bar',
+                data: used,
+                    color:'#1351a0',
+                    barWidth: 30,
+                }
+            ]
+        };
+
+
+    var bar2 = echarts.init(document.getElementById('bar2'));
+    var usable2 = [2.0, 2.2,2.4]
+    var used2 = [2.0, 2.2,2.4]
+    var bar2Option = {
+        title: {
+            text: "银河德睿授信情况（L2）",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        grid:{
+            x:55,
+
+        },
+        xAxis: {
+            type: 'category',
+            data: ['场外非券商银行类', '场外券商银行类','期现']
+        },
+        yAxis: {
+            type: 'value',
+        },
+        series: [
+        {
+            name: '审批值',
+            type: 'bar',
+            data: usable2,
+             barWidth: 30
+        },
+            {
+            name: '占用值',
+            type: 'bar',
+            data: used2,
+                 barWidth: 30,
+                color:'#1351a0',
+        }
+    ]
+    };
+
+
+
+    {#    三个仪表盘#}
+    var gauge1 = echarts.init(document.getElementById('gauge1'));
+    var option1Data = [{value: 0, name: '净资本'}]
+    var option1 = {
+    tooltip: {
+        formatter: '{a} <br/>{b} : {c}%'
+    },
+    series: [
+        {
+            name: '业务指标',
+            type: 'gauge',
+            min: 0,
+            max: 150000,
+            startAngle: 180,
+            endAngle: 0,
+            splitNumber: 5,
+            axisLine: {            // 坐标轴线
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    width: 8,
+                    color: [[0.02, '#c23531'], [0.025, '#f5ee1c'], [1, '#1351a0']]
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                length: 10,        // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: 'auto'
+                }
+            },
+            splitLine: {           // 分隔线
+                length: 15,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: 'auto'
+                }
+            },
+            pointer: {
+                width: 5
+            },
+            title: {
+                offsetCenter: [0, '-120%'],// x, y，单位px
+                fontWeight: 'bolder',
+                fontSize:15
+            },
+            detail: {
+                fontWeight: 'bolder',
+                formatter: '{value}万元',
+                offsetCenter:["0","20%"],
+                fontSize:15},
+            data: option1Data,
+        }
+    ]
+};
+
+    var gauge2 = echarts.init(document.getElementById('gauge2'));
+    var option2Data = [{value: 0, name: '净资本/净资产'}]
+    var option2 = {
+    tooltip: {
+        formatter: '{a} <br/>{b} : {c}%'
+    },
+    series: [
+        {
+            name: '业务指标',
+            type: 'gauge',
+            min: 0,
+            max: 100,
+            startAngle: 180,
+            endAngle: 0,
+            splitNumber: 5,
+
+            axisLine: {            // 坐标轴线
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    width: 8,
+                    color: [[0.2, '#c23531'], [0.25, '#f5ee1c'], [1, '#1351a0']]
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                length: 10,        // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: 'auto'
+                }
+            },
+            splitLine: {           // 分隔线
+                length: 15,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: 'auto'
+                }
+            },
+            pointer: {
+                width: 5
+            },
+            title: {
+                offsetCenter: [0, '-120%'],// x, y，单位px
+                fontWeight: 'bolder',
+                fontSize:15
+            },
+            detail: {
+                fontWeight: 'bolder',
+                formatter: '{value}%',
+                offsetCenter:["0","20%"],
+                fontSize:15},
+            data: option2Data,
+        }
+    ]
+};
+
+    var gauge3 = echarts.init(document.getElementById('gauge3'));
+    var option3Data = [{value: 0, name: '风险覆盖率'}]
+    var option3 = {
+    tooltip: {
+        formatter: '{a} <br/>{b} : {c}%'
+    },
+    series: [
+        {
+            name: '业务指标',
+            type: 'gauge',
+            min: 0,
+            max: 500,
+            startAngle: 180,
+            endAngle: 0,
+            splitNumber: 5,
+            axisLine: {            // 坐标轴线
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    width: 8,
+                    color: [[0.2, '#c23531'], [0.24, '#f5ee1c'], [1, '#1351a0']]
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                length: 10,        // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: 'auto'
+                }
+            },
+            splitLine: {           // 分隔线
+                length: 15,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: 'auto'
+                }
+            },
+            pointer: {
+                width: 5
+            },
+            title: {
+                offsetCenter: [0, '-120%'],// x, y，单位px
+                fontWeight: 'bolder',
+                fontSize:15
+            },
+            detail: {
+                fontWeight: 'bolder',
+                formatter: '{value}%',
+                offsetCenter:["0","20%"],
+                fontSize:15},
+            data: option3Data
+        }
+    ]
+};
+
+
+{#表格#}
+    var tableIns = table.render({
+        elem: '#specialCreidt'
+        , url: '/fxglb/getSpecialCreidtInfo'
+        , title: '特殊授信表'
+        , parseData: function (res) { //res 即为原始返回的数据
+            console.log(res.data.specialCreditData)
+            specialCreditData = res.data.specialCreditData;
+            return {
+                "code": 0, //解析接口状态
+                "msg": "", //解析提示文本
+                "count": res.data.total, //解析数据长度
+                "data": res.data.specialCreditData //解析数据列表
+            };
+        }
+        , cols: [[
+              {field:"sector", title: '业务类别', align: 'center',}
+             ,{field:"name", title: '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;客户名称&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;', align: 'center',minWidth:400}
+             ,{field:"amt", title: '额度&#8197;', align: 'center'}
+             ,{field:"deadline", title: '&emsp;有效期&emsp;', align: 'center'}
+        ]]
+    });
+
+    // 监听搜索操作
+    form.on('submit(searchBtn)', function (data) {
+        $.ajax({
+            url: "/fxglb/getDoubleWeeklyData?date="+data.field.searchDate,
+            success: function (res) {
+                console.log(res)
+                if(res.code==2000){
+                    let data = res.data
+                    barOption.series[0].data = [data[0].l1_creditAmt_nonSecBank_usable,data[0].l1_creditAmt_secBank_usable];
+                    barOption.series[1].data = [data[0].l1_creditAmt_nonSecBank_used,data[0].l1_creditAmt_secBank_used];
+                    bar.setOption(barOption);
+
+                    bar2Option.series[0].data = [data[0].l2_otc_creditAmt_nonSecBank,data[0].l2_otc_creditAmt_secBank,data[0].l2_c_creditAmt_usable];
+                    bar2Option.series[1].data = [data[0].l1_creditAmt_nonSecBank_used - data[0].l2_c_creditAmt_used,data[0].l1_creditAmt_secBank_used,data[0].l2_c_creditAmt_used];
+                    bar2.setOption(bar2Option);
+
+                    option1.series[0].data = [{value: data[0].netEquity, name: '净资本'}];
+                    gauge1.setOption(option1);
+
+                    option2.series[0].data = [{value: data[0].netEAratio, name: '净资本/净资产'}];
+                    gauge2.setOption(option2);
+
+                    option3.series[0].data = [{value: data[0].coverRatio, name: '风险覆盖率'}];
+                    gauge3.setOption(option3);
+
+                    document.getElementById("date").innerText=data[0].date;
+                    document.getElementById("reportDate").innerText=data[0].reportDate;
+                    document.getElementById("num").innerText=data[0].year + '年第'+data[0].yearNum+'期  总第'+data[0].totalNum+'期';
+
+                    document.getElementById("marginCall").innerText=data[0].marginCall;
+                    document.getElementById("closePos").innerText=data[0].closePos;
+                    document.getElementById("overLoss").innerText=data[0].overLoss;
+                    document.getElementById("yearOverLoss").innerText=data[0].yearOverLoss;
+
+                    document.getElementById("importantText").innerHTML='<span style="font-weight: bold">风险监管指标：</span>'+data[0].riskSupText +
+                        '<br><span style="font-weight: bold">董事会风险授权：</span>'+ data[0].authText +
+                        '<br><span style="font-weight: bold">风险限额指标：</span>'+ data[0].limitText +
+                        '<br><span style="font-weight: bold">重大风险事件：</span>'+ data[0].importantRiskText;
+
+
+                    document.getElementById("totalAmount").innerText=data[0].totalAmount;
+                    document.getElementById("selfAmount").innerText=data[0].selfAmount;
+                    document.getElementById("alertNum").innerText=data[0].alertNum;
+                    document.getElementById("cleanNum").innerText=data[0].cleanNum;
+
+                    document.getElementById("productAmt").innerText=data[0].productAmt;
+                    document.getElementById("productNum").innerText=data[0].productNum;
+                    document.getElementById("yearPnl").innerText=data[0].yearPnl;
+
+                    document.getElementById("cashAmt").innerText=data[0].cashAmt;
+                    document.getElementById("cashNum").innerText=data[0].cashNum;
+                    document.getElementById("cashYearPnl").innerText=data[0].cashYearPnl;
+
+
+                    document.getElementById("l1_creditAmt_nonSecBank_usable").innerText=data[0].l1_creditAmt_nonSecBank_usable;
+                    document.getElementById("l1_creditAmt_nonSecBank_used").innerText=data[0].l1_creditAmt_nonSecBank_used;
+                    document.getElementById("l1_creditAmt_secBank_usable").innerText=data[0].l1_creditAmt_secBank_usable;
+                    document.getElementById("l1_creditAmt_secBank_used").innerText=data[0].l1_creditAmt_secBank_used;
+                    document.getElementById("l2_otc_creditAmt_nonSecBank").innerText=data[0].l2_otc_creditAmt_nonSecBank;
+                    document.getElementById("l2_otc_creditAmt_secBank").innerText=data[0].l2_otc_creditAmt_secBank;
+                    document.getElementById("l2_otc_creditAmt_nonSecBank_used").innerText=(data[0].l1_creditAmt_nonSecBank_used - data[0].l2_c_creditAmt_used).toFixed(2);
+                    document.getElementById("l2_otc_creditAmt_secBank_used").innerText=data[0].l1_creditAmt_secBank_used;
+                    document.getElementById("l2_c_creditAmt_usable").innerText=data[0].l2_c_creditAmt_usable;
+                    document.getElementById("l2_c_creditAmt_used").innerText=data[0].l2_c_creditAmt_used;
+
+                    document.getElementById("totalAmt").innerHTML= data[0].totalAmt;
+                    document.getElementById("totalCashDelta").innerHTML= data[0].totalCashDelta;
+                    document.getElementById("totalVar").innerHTML= data[0].totalVar;
+                    document.getElementById("totalPnl").innerHTML= data[0].totalPnl;
+
+                    document.getElementById("otcAmt").innerHTML= data[0].otcAmt;
+                    document.getElementById("otcCashDelta").innerHTML= data[0].otcCashDelta;
+                    document.getElementById("otcVar").innerHTML= data[0].otcVar;
+                    document.getElementById("otcPnl").innerHTML= data[0].otcPnl;
+
+                    document.getElementById("ommAmt").innerHTML= data[0].ommAmt;
+                    document.getElementById("ommCashDelta").innerHTML= data[0].ommCashDelta;
+                    document.getElementById("ommVar").innerHTML= data[0].ommVar;
+                    document.getElementById("ommPnl").innerHTML= data[0].ommPnl;
+
+                    document.getElementById("productInvestAmt").innerHTML= data[0].productInvestAmt;
+                    document.getElementById("productCashDelta").innerHTML= data[0].productCashDelta;
+                    document.getElementById("productVar").innerHTML= data[0].productVar;
+                    document.getElementById("productPnl").innerHTML= data[0].productPnl;
+
+                    document.getElementById("sigmaAmt").innerHTML= data[0].sigmaAmt;
+                    document.getElementById("sigmaCashDelta").innerHTML= data[0].sigmaCashDelta;
+                    document.getElementById("sigmaVar").innerHTML= data[0].sigmaVar;
+                    document.getElementById("sigmaPnl").innerHTML= data[0].sigmaPnl;
+
+                    document.getElementById("cAmt").innerHTML= data[0].cAmt;
+                    document.getElementById("cCashDelta").innerHTML= data[0].cCashDelta;
+                    document.getElementById("cVar").innerHTML= data[0].cVar;
+                    document.getElementById("cPnl").innerHTML= data[0].cPnl;
+
+                    document.getElementById("ommBack").innerHTML= data[0].ommBack;
+
+                }
+            }
+        })
+        var dates = data.field.searchDate;
+        tableIns.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                "date": dates
+            }
+        });
+    });
+
+    });
+</script>
+
+</body>
+</html>

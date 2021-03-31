@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>测试页2</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="../static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+      <dd><a href="../add/newproduct">新审批产品</a></dd>
+      <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+      <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+      <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="">周报</a></dd>
+      <dd><a href="">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item layui-this">
+     <a href="javascript:;">测试页</a>
+     <dl class="layui-nav-child">
+      <dd><a href="test1">测试页1</a></dd>
+      <dd class="layui-this"><a href="test2">测试页2</a></dd>
+    </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>测试页2</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+  测试页2
+  <br>*测试页2
+</blockquote>
+
+<div class="layui-form" lay-filter="myForm" style="white-space:nowrap!important;">
+    {%csrf_token%}
+    <div class="layui-form-item">
+          <div class="layui-inline layui-col-md3">
+            <label class="layui-form-label">产品名称</label>
+            <div class="layui-input-block">
+              <input type="text" id="productName" name="productName" class="layui-input" lay-verify="required" autocomplete="off">
+            </div>
+          </div>
+        <div class="layui-inline">
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="checkName">检查</button>
+        </div>
+
+            {##产品信息 管理人#}
+          <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">管理人</label>
+                <div class="layui-input-block">
+                  <input type="text" name="manager" value="0" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">负责部门及人员</label>
+                <div class="layui-input-block" style="padding-left:40px">
+                  <input type="text" name="sector" value="0" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+          </div>
+        <button class="layui-btn  layui-btn-normal layui-col-md1" lay-submit="" lay-filter="saveBtn">保存</button>
+    </div>
+
+</div>
+<div style="padding: 20px;">
+    <table class="layui-table" id="table" lay-filter="table"></table>
+</div>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+
+<script>
+    layui.use(['table', 'laydate', 'form', 'jquery'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+
+        // 监听搜索操作
+        form.on('submit(checkName)', function (data) {
+            $.ajax({
+                url: "/productApi?productName="+data.field.productName,
+                success: function (res) {
+                    console.log(res)
+                    if(res.code==2000){
+                         let data = res.data
+                        form.val("myForm", {
+                            "productName": data.productName
+                          ,"manager": data.manager
+                          ,"sector": data.sector
+                        });
+                    }
+                }
+            })
+        });
+        var tableIns = table.render({
+            elem: '#table'
+            , url: '/addProduct'
+            , toolbar: '#toolbarDemo'
+            , title: '数据表'
+            , cellMinWidth: 80
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.fundBasicInfoData)
+                fundBasicInfoData = res.data.fundBasicInfoData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                {field: "date", title: '数据日期', align: 'center', fixed: 'left', width: '7%', minWidth: 200}
+                , {field: "productName", title: '产品名称', align: 'center', fixed: 'left', width: '10%', minWidth: 200}
+                , {field: "productFullName", title: '产品全名', align: 'center', width: '15%'}
+                , {field: "manager", title: '管理人', align: 'center', width: '7%'}
+                , {field: "sector", title: '项目负责部门及人员', align: 'center', width: '10%'}
+
+            ]]
+        });
+        // 监听搜索操作
+        form.on('submit(saveBtn)', function (data) {
+            var productName = data.field.productName;
+            var manager = data.field.manager;
+            var sector = data.field.sector;
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "productName": productName,
+                    "manager": manager,
+                    "sector": sector
+                }
+            });
+        });
+    });
+</script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>产品投资报告挂钩经纪业务版</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+</head>
+<body>
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+      <dd><a href="../add/newproduct">新审批产品</a></dd>
+      <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+      <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+      <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item layui-this">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="combinedStat">合并报表统计</a></dd>
+      <dd><a href="productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="fundData">基金盈亏数据（收益率）</a></dd>
+      <dd class="layui-this"><a href="productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>报表查询-产品投资报告（挂钩经纪业务数据）</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    挂钩经纪业务数据
+    <br>*根据德索系统按日明细数据加总计算
+    <br>*盈亏（使用真实日期净值计算盈亏）、在投（匹配确认日期的交易数据）等数据均为真实日期数据
+    <br>*产品状态通过在投成本等方式进行判断，即可对应查询结束日期时的状态
+    <br>*挂钩经纪业务产品盈亏数据表在页面最下方（支持导出）
+    <p style="color: #ff0000">*若选择时间段较长，页面加载较慢，需耐心等待，请不要多次点击</p>
+    *可单独加载每日在投规模分布
+</blockquote>
+
+<div style="padding-bottom: 20px;">
+    <label class="layui-form-label">上传数据</label>
+    <button type="button" class="layui-btn layui-btn-normal" id="uploadBrokerData"><i class="layui-icon"></i>上传经纪业务数据</button>
+</div>
+<div class="layui-form">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">日期范围</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="dateRange" id="dateRange" placeholder=" - ">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">负责部门</label>
+            <div class="layui-input-block">
+                <select name="sector" id="sectorSelect" lay-filter="sector" lay-search="" class="layui-input">
+                    <option value="全部">全部</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">管理人</label>
+            <div class="layui-input-block">
+                <select name="manager" id="managerSelect" lay-filter="manager" lay-search="" class="layui-input">
+                    <option value="全部">全部</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">投资目的</label>
+            <div class="layui-input-block">
+              <select name="investPurpose" id="investPurpose" lay-filter="investPurpose" lay-search="" class="layui-input">
+                  <option value="全部">全部</option>
+                  <option value="获取投资收益">获取投资收益</option>
+                  <option value="促进经纪业务">促进经纪业务</option>
+                  <option value="促进资管业务转型">促进资管业务转型</option>
+                  <option value="其他">其他</option>
+              </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">投资策略</label>
+            <div class="layui-input-block">
+              <select name="strategy" id="strategy" lay-filter="strategy" lay-search="" class="layui-input">
+                  <option value="全部">全部</option>
+                  <option value="方向性">方向性</option>
+                  <option value="对冲套利类">对冲套利类</option>
+                  <option value="其他">其他</option>
+              </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="searchBtn">搜索</button>
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="investAmountBtn">每日在投规模分布</button>
+        </div>
+    </div>
+</div>
+<div style="padding-left: 30px;padding-right: 30px;">
+    <div style="margin-bottom: 10px!important;">
+        <p style = 'text-align: right'>单位：万元</p>
+        <table class="layui-table" lay-skin="row" >
+            <thead>
+            <tr>
+                <th style="background-color: #b6d0f1; font-weight: bold">开始日期</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">结束日期</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">管理人数量（含已结束/仅在投）</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">产品数量（含已结束/仅在投）</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">投资目的</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">累计投资/在投成本</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">期间盈亏</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">年度盈亏</th>
+                <th style="background-color: #b6d0f1; font-weight: bold">累计盈亏</th>
+            </tr>
+            </thead>
+          <tbody>
+          <tr>
+            <td rowspan="3" id="begDate"></td>
+            <td rowspan="3" id="date"></td>
+            <td id="manager"></td>
+            <td id="productName"></td>
+            <td id="investPurposeResult"></td>
+            <td id="cost"></td>
+            <td id="durPnl"></td>
+            <td id="yearPnl"></td>
+            <td id="cumPnl"></td>
+          </tr>
+          <tr>
+            <td style="background-color: #b6d0f1; font-weight: bold">原期末存量权益</td>
+            <td style="background-color: #b6d0f1; font-weight: bold">净利息收入</td>
+            <td style="background-color: #b6d0f1; font-weight: bold">净留存</td>
+            <td style="background-color: #b6d0f1; font-weight: bold">经纪业务收入</td>
+            <td style="background-color: #b6d0f1; font-weight: bold">期末权益</td>
+            <td style="background-color: #b6d0f1; font-weight: bold">日均权益</td>
+            <td style="background-color: #b6d0f1; font-weight: bold">期间权益峰值</td>
+          </tr>
+          <tr>
+            <td id="his"></td>
+            <td id="netInt"></td>
+            <td id="netLeft"></td>
+            <td id="brokerIncome"></td>
+            <td id="endEquity"></td>
+            <td id="avgEquity"></td>
+            <td id="maxEquity"></td>
+          </tr>
+          </tbody>
+        </table>
+    </div>
+</div>
+<div style="margin-left: 200px">
+    <div id="investAmountBar" style="height:400px;width:80%;"></div>
+    <div id="brokerLineBar" style="height:400px;width:80%;"></div>
+</div>
+<div style="padding-left: 30px;padding-right: 30px;">
+    <table class="layui-table" id="table" lay-filter="table"></table>
+    {#    <table class="layui-table" id="child" lay-filter="child"></table>#}
+</div>
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+
+{#表格#}
+<script>
+    layui.use(['table', 'laydate', 'form', 'jquery'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var projectList = []
+
+        //日期范围
+        laydate.render({
+            elem: '#dateRange'
+            , range: true
+            , max: 0
+            , isInitValue: true
+        });
+        //下拉选框
+        $(function(){
+            $.post("../availableProductName", function(data){
+                for (var k in data.data.productNameData)
+                  {
+                      $("#sectorSelect").append("<option value='"+data.data.productNameData[k].sector + "'>"+data.data.productNameData[k].sector +"</option>");
+                      $("#managerSelect").append("<option value='"+data.data.productNameData[k].manager + "'>"+data.data.productNameData[k].manager +"</option>");
+                  }
+                  layui.use('form', function(){
+                      var form = layui.form;
+                      form.render();
+                  });
+                }
+            );
+        })
+        {#柱状图 #}
+        var line = echarts.init(document.getElementById('investAmountBar'));
+        var investAmountTotal = [10000000, 20000000]
+        var date = ['2020-01-01', '2020-01-02']
+        var lineOption = {
+            title: {
+                text: "每日在投规模",
+                left: "center",
+                top: "top",
+                textStyle: {
+                  fontSize: 14,
+                  fontWeight: "bold",
+                },
+            },
+            toolbox: {
+                show: true,
+                feature: {
+                    dataZoom: {
+                        yAxisIndex: 'none'
+                    },
+                    dataView: {readOnly: false},
+                    magicType: {type: ['line', 'bar']},
+                    restore: {},
+                    saveAsImage: {}
+                }
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data: date
+            },
+            yAxis: {
+                type: 'value',
+            },
+            series: [
+                {
+                    name: '在投规模',
+                    type: 'line',
+                    data: investAmountTotal,
+                    markLine: {
+                        data: [
+                            {type: 'max', name: '最大值'}
+                        ]
+
+                    }
+                }
+            ]
+        };
+
+        var lineBar = echarts.init(document.getElementById('brokerLineBar'));
+        var totalEndEquityList = [10000000, 20000000]
+        var totalBrokerIncomeList = [100, 200]
+        var date = ['2020-01-01', '2020-01-02']
+        var lineBarOption = {
+            toolbox: {
+                show: true,
+                feature: {
+                    dataZoom: {
+                        yAxisIndex: 'none'
+                    },
+                    dataView: {readOnly: false},
+                    magicType: {type: ['line', 'bar']},
+                    restore: {},
+                    saveAsImage: {}
+                }
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    crossStyle: {
+                        color: '#999'
+                    }
+                }
+            },
+            legend: {
+                data: ['期末权益', '经纪收入']
+            },
+            xAxis: {
+                type: 'category',
+                data: date
+            },
+            yAxis: [
+                {
+                    type: 'value',
+                    name: '期末权益（万元）',
+                    axisLabel: {
+                        formatter: '{value}'
+                    }
+                },
+                {
+                    type: 'value',
+                    name: '经纪收入（元）',
+                    axisLabel: {
+                        formatter: '{value}'
+                    }
+                }
+            ],
+            series: [
+                {
+                    name: '期末权益',
+                    type: 'line',
+                    data: totalEndEquityList,
+                    {#markLine: {#}
+                    {#    data: [#}
+                    {#        {type: 'max', name: '最大值'}#}
+                    {#    ]#}
+                },
+                {
+                    name: '经纪收入',
+                    type: 'bar',
+                    yAxisIndex: 1,
+                    data: totalBrokerIncomeList,
+                }
+            ]
+        };
+        //温馨提示：默认由前端自动合计当前行数据。从 layui 2.5.6 开始： 若接口直接返回了合计行数据，则优先读取接口合计行数据。
+        //详见：https://www.layui.com/doc/modules/table.html#totalRow
+        var tableIns = table.render({
+            elem: '#table'
+            , url: '/fxglb/getBrokerData'
+            , toolbar: '#toolbarDemo'
+            , title: '产品投资报告（挂钩经纪业务数据）'
+            , height: 'full-200'
+            , initSort: {field:'manager', type:'asc'}
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.pnlTableInfo)
+                projectList = res.data.pnlTableInfo;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "data": res.data.pnlTableInfo //解析数据列表，设置为data，为当前页数据
+                };
+            }
+            , cols: [[
+                  {field:"begDate", title: '开始日期',fixed: 'left', align: 'center', sort: true,width: '7%' }
+                 ,{field:"date", title: '结束日期',fixed: 'left', align: 'center', sort: true,width: '7%' }
+                 ,{field:"manager", title: '管理人',fixed: 'left', align: 'center',sort: true,width: '15%' }
+                 ,{field:"productName", title: '产品名称',fixed: 'left', align: 'center',sort: true,width: '8%' }
+                 ,{field:"status", title: '产品状态', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"sector", title: '负责部门', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"investPurpose", title: '投资目的', align: 'center',sort: true,width: '7%'  }
+
+                 ,{field:"productType1", title: '产品类型1', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"strategy", title: '策略', align: 'center',sort: true,width: '7%'  }
+
+                 ,{field:"buyCashAmount", title: '累计申购', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"cost", title: '成本', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"todayNetValue", title: '今日单位净值', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"durPnl", title: '期间盈亏', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"yearPnl", title: '年度盈亏', align: 'center',sort: true,width: '7%'  }
+                 ,{field:"cumPnl", title: '累计盈亏', align: 'center',sort: true,width: '7%'  }
+
+                , {field:"account", title: '账户', align: 'center',sort: true,width: '7%'  }
+                , {field:"his", title: '原期末存量权益', align: 'center',sort: true,width: '7%'  }
+                , {field:"netInt", title: '净利息收入', align: 'center',sort: true,width: '7%'  }
+                , {field:"netLeft", title: '净留存', align: 'center',sort: true,width: '7%'  }
+                , {field:"brokerIncome", title: '经纪业务收入', align: 'center',sort: true,width: '7%'  }
+                , {field:"endEquity", title: '期末权益', align: 'center',sort: true,width: '7%'  }
+                , {field:"avgEquity", title: '日均权益', align: 'center',sort: true,width: '7%'  }
+                , {field:"maxEquity", title: '期间权益峰值', align: 'center',sort: true,width: '7%'  }
+                , {field:"demo", title: '备注', align: 'center',sort: true,width: '7%'  }
+            ]]
+        });
+
+        //监听提交
+        form.on('submit(searchBtn)', function (data) {
+            var data = data.field;
+            var dateRange = data.dateRange;
+            var investPurpose = data.investPurpose;
+            var strategy = data.strategy;
+            var sector = data.sector;
+            var manager = data.manager;
+            $.ajax({
+                url: "/fxglb/getInvestAmountData?date=" + dateRange + "&investPurpose=" + investPurpose + "&sector=" + sector + "&manager=" + manager + "&strategy=" + strategy,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        lineOption.xAxis.data = res.dateList
+                        lineOption.series[0].data = res.investAmountList;
+                        line.setOption(lineOption);
+                    }
+                }
+            });
+            $.ajax({
+                url: "/fxglb/getBrokerDataSeries?date=" + dateRange + "&investPurpose=" + investPurpose + "&sector=" + sector + "&manager=" + manager + "&strategy=" + strategy,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        lineBarOption.xAxis.data = res.data.dateList
+                        lineBarOption.series[0].data = res.data.totalEndEquityList;
+                        lineBarOption.series[1].data = res.data.totalBrokerIncomeList;
+                        lineBar.setOption(lineBarOption);
+                    }
+                }
+            });
+            $.ajax({
+                url: "/fxglb/getBrokerData?date=" + dateRange + "&investPurpose=" + investPurpose + "&sector=" + sector + "&manager=" + manager + "&strategy=" + strategy,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        document.getElementById("begDate").innerText=res.data.totalTableInfo[0].begDate;
+                        document.getElementById("date").innerText=res.data.totalTableInfo[0].date;
+                        document.getElementById("manager").innerText=res.data.totalTableInfo[0].manager+' / '+res.data.totalTableInfo[0].manager2;
+                        document.getElementById("productName").innerText=res.data.totalTableInfo[0].productName+' / '+res.data.totalTableInfo[0].productName2;
+                        document.getElementById("investPurposeResult").innerText=res.data.totalTableInfo[0].investPurpose;
+
+                        document.getElementById("cost").innerText=res.data.totalTableInfo[0].buyCashAmount + ' / ' + res.data.totalTableInfo[0].cost + ' 亿元';
+                        document.getElementById("durPnl").innerText=res.data.totalTableInfo[0].durPnl;
+                        document.getElementById("yearPnl").innerText=res.data.totalTableInfo[0].yearPnl;
+                        document.getElementById("cumPnl").innerText=res.data.totalTableInfo[0].cumPnl;
+
+                        document.getElementById("his").innerText=res.data.totalTableInfo[0].his
+                        document.getElementById("netInt").innerText=res.data.totalTableInfo[0].netInt;
+                        document.getElementById("netLeft").innerText=res.data.totalTableInfo[0].netLeft;
+                        document.getElementById("brokerIncome").innerText=res.data.totalTableInfo[0].brokerIncome;
+                        document.getElementById("endEquity").innerText=res.data.totalTableInfo[0].endEquity;
+                        document.getElementById("avgEquity").innerText=res.data.totalTableInfo[0].avgEquity;
+                        document.getElementById("maxEquity").innerText=res.data.totalTableInfo[0].maxEquity + ' 亿元';
+                    }
+                    tableIns.reload({
+                        where: { //设定异步数据接口的额外参数，任意设
+                            "date": dateRange,
+                            "investPurpose": investPurpose,
+                            "sector": sector,
+                            "manager": manager,
+                            "strategy": strategy,
+                        }
+                    });
+
+                }
+
+            });
+
+
+            {#tableChild.reload({#}
+            {#    where: { //设定异步数据接口的额外参数，任意设#}
+            {#        "date": dateRange#}
+            {#    }#}
+            {#    , page: {#}
+            {#        curr: 1 //重新从第 1 页开始#}
+            {#    }#}
+        });
+        form.on('submit(investAmountBtn)', function (data) {
+            var data = data.field;
+            var dateRange = data.dateRange;
+            var investPurpose = data.investPurpose;
+            var sector = data.sector;
+            var manager = data.manager;
+            $.ajax({
+                url: "/fxglb/getInvestAmountData?date=" + dateRange + "&investPurpose=" + investPurpose + "&sector=" + sector + "&manager=" + manager + "&strategy=" + strategy,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        lineOption.xAxis.data = res.dateList
+                        lineOption.series[0].data = res.investAmountList;
+                        line.setOption(lineOption);
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+{#上传文件数据#}
+<script>
+layui.use([ 'jquery'], function () {
+
+    var $ = layui.jquery;
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+    })
+})
+</script>
+<script>
+layui.use('upload', function(){
+  var $ = layui.jquery
+  ,upload = layui.upload;
+
+  upload.render({
+    elem: '#uploadBrokerData'
+    ,url: '../postBrokerData' //改成您自己的上传接口
+    ,accept: 'file' //普通文件
+    ,done: function(res){
+      layer.msg('上传成功');
+      console.log(res);
+    }
+  });
+});
+
+</script>
+
+
+</body>
+</html>
+
+
+        {#var tableChild = table.render({#}
+        {#    elem: '#child'#}
+        {#    , url: '/getBrokerData'#}
+        {#    , toolbar: '#toolbarDemo'#}
+        {#    , title: '数据表'#}
+        {#    , defaultToolbar: ['filter', 'exports', 'print']#}
+        {#    , parseData: function (res) { //res 即为原始返回的数据#}
+        {#        console.log(res.data.fundBrokeInfo)#}
+        {#        projectList = res.data.fundBrokeInfo;#}
+        {#        return {#}
+        {#            "code": 0, //解析接口状态#}
+        {#            "msg": "", //解析提示文本#}
+        {#            "count": res.data.total, //解析数据长度#}
+        {#            "data": res.data.data //解析数据列表，设置为data，为当前页数据#}
+        {#        };#}
+        {#    }#}
+        {#    , cols: [[#}
+        {#        {field: "begDate", title: '开始日期', align: 'center', sort: true, width: '7%'}#}
+        {#        , {field: "endDate", title: '结束日期', align: 'center', sort: true, width: '7%'}#}
+        {#        , {field: "manager", title: '管理人', align: 'center', sort: true, width: '15%'}#}
+        {#        , {field: "acc", title: '账户', align: 'center', sort: true}#}
+        {#        , {field: "his", title: '原期末存量权益', align: 'center', sort: true}#}
+        {#        , {field: "netInt", title: '净利息收入', align: 'center', sort: true}#}
+        {#        , {field: "netLeft", title: '净留存', align: 'center', sort: true}#}
+        {#        , {field: "broIncome", title: '经纪业务收入', align: 'center', sort: true}#}
+        {#        , {field: "endEquity", title: '期末权益', align: 'center', sort: true}#}
+        {#        , {field: "avgEquity", title: '日均权益', align: 'center', sort: true}#}
+        {#    ]]#}
+        {#    , page: true#}

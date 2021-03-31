@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>录入每日基金净值</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+    <img src="/static/layui/images/newlogo.gif"/>
+    <li class="layui-nav-item"><a href="../">主页</a></li>
+    <li class="layui-nav-item layui-this">
+        <a href="javascript:;">每日基金数据录入</a>
+        <dl class="layui-nav-child">
+            <dd><a href="tradeinfo">新增交易记录</a></dd>
+            <dd><a href="newproduct">新审批产品</a></dd>
+            <dd><a href="modifyamt">修改总办会额度</a></dd>
+            <dd class="layui-this"><a href="unitdata">录入每日基金净值</a></dd>
+            <dd><a href="calcpnlreport">计算日报盈亏数据</a></dd>
+            <dd><a href="calctruepnl">计算真实盈亏数据</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">报表查询</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+            <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+            <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+            <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">定期报告</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+            <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+            <dd><a href="">月报</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">数据分析</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+            <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+        </dl>
+    </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+    <legend>每日基金数据录入-录入每日基金净值</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    更新产品净值表，上传文件，成功后更新(手动刷新界面后更新）
+    <br>*手动刷新界面后更新
+    <br>*“今日数据”功能：今日若无净值数据，自动取数据库中上一日数据，即今日净值=上一日净值
+    <br>*“历史补录”功能：直接存入库，不进行任何判断
+    <br>*同时，按照“真实日期”录入净值数据至独立数据表，不会自动补填，如上传重复数据（根据产品名称+数据日期进行判断），则进行替换
+    <br>*文件请勿重复上传
+</blockquote>
+<div style="padding: 10px;">
+    <div style="padding-bottom: 20px;">
+        <label class="layui-form-label">上传数据</label>
+        <button type="button" class="layui-btn layui-btn-normal" id="upload"><i class="layui-icon"></i>今日数据</button>
+        <button type="button" class="layui-btn layui-btn-normal" id="uploadHis"><i class="layui-icon"></i>历史补录</button>
+    </div>
+</div>
+
+<div style="padding: 20px;">
+    {##净值表#}
+    <table class="layui-hide" id="netValue" lay-filter="netValue"></table>
+    <table class="layui-hide" id="confirmNetValue" lay-filter="confirmNetValue"></table>
+</div>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+
+{#表格操作#}
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</a>
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+{#表格#}
+<script>
+    layui.use(['table', 'laydate', 'form', 'jquery', 'laypage'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var netValue = table.render({
+            elem: '#netValue'
+            , url: '/fxglb/getFundNetValueInfo'
+            , toolbar: '#toolbarDemo'
+            , title: '日报净值表'
+            , page: true
+            , limit: 10
+            , initSort: {field: 'lastUpdateDate', type: 'desc'}
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.fundNetValueData)
+                fundNetValueData = res.data.fundNetValueData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                {field: "date", title: '数据日期', align: 'center', sort: true, filter: true}
+                , {field: "lastUpdateDate", title: '最后更新日期', align: 'center', sort: true, filter: true}
+                , {field: "productName", title: '产品名称', align: 'center', sort: true, filter: true}
+                , {field: "netValue", title: '单位净值', align: 'center'}
+                , {field: "acNetValue", title: '累计净值', align: 'center'}
+                , {field: "demo", title: '备注', align: 'center'}
+                {#,{fixed: 'right', title: '操作', width:150, align:'center', toolbar: '#barDemo'}#}
+            ]]
+        });
+
+
+        var confirmNetValue = table.render({
+            elem: '#confirmNetValue'
+            , url: '/fxglb/getConfirmNetValueInfo'
+            , toolbar: '#toolbarDemo'
+            , title: '数据表'
+            , initSort: {field: 'lastUpdateDate', type: 'desc'}
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.fundNetValueData)
+                fundNetValueData = res.data.fundNetValueData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                {field: "date", title: '数据日期', align: 'center', sort: true}
+                , {field: "lastUpdateDate", title: '最后更新日期', align: 'center', sort: true}
+                , {field: "productName", title: '产品名称', align: 'center', sort: true}
+                , {field: "netValue", title: '单位净值', align: 'center'}
+                , {field: "acNetValue", title: '累计净值', align: 'center'}
+                , {field: "demo", title: '备注', align: 'center'}
+                {#,{fixed: 'right', title: '操作', width:150, align:'center', toolbar: '#barDemo'}#}
+            ]]
+            , page: true
+        });
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            var data = data.field;
+            var dates = data.searchDate;
+
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": dates
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+
+
+        });
+    });
+</script>
+
+{#菜单#}
+<script>
+    layui.use('element', function () {
+        var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+        //监听导航点击
+        element.on('nav(demo)', function (elem) {
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+    });
+</script>
+
+{#上传文件数据#}
+<script>
+    layui.use(['jquery'], function () {
+
+        var $ = layui.jquery;
+        $.ajaxSetup({
+            data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+        })
+    })
+</script>
+<script>
+    layui.use('upload', function () {
+        var $ = layui.jquery
+            , upload = layui.upload;
+
+        upload.render({
+            elem: '#upload'
+            , url: '../postPnl' //改成您自己的上传接口
+            , accept: 'file' //普通文件
+            , done: function (res) {
+                layer.msg('上传成功');
+                console.log(res);
+            }
+        });
+    });
+
+    layui.use('upload', function () {
+        var $ = layui.jquery
+            , upload = layui.upload;
+
+        upload.render({
+            elem: '#uploadHis'
+            , url: '../postPnlHis' //改成您自己的上传接口
+            , accept: 'file' //普通文件
+            , done: function (res) {
+                layer.msg('上传成功');
+                console.log(res);
+            }
+        });
+    });
+</script>
+</body>
+</html>

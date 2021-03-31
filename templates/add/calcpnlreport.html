@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>计算日报盈亏数据</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item layui-this">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="tradeinfo">新增交易记录</a></dd>
+      <dd><a href="newproduct">新审批产品</a></dd>
+      <dd><a href="modifyamt">修改总办会额度</a></dd>
+      <dd><a href="unitdata">录入每日基金净值</a></dd>
+      <dd class="layui-this"><a href="calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>每日基金数据录入-计算日报盈亏数据</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    根据今日更新数据计算盈亏，计算后更新产品盈亏表
+    <br>*日报数据不回滚
+    <br>*数据日期为必选
+    <br>*日报日期不选，默认为系统今日时间。产品名称不选，默认为全部产品。
+    <br>*历史申赎数据：以计算日录入更新记录为准，即confirmDate<=数据日期，date==日报日期
+    <br>*重复计算：若数据库内存在该数据日期数据，将删除该日期全部数据后重新计算盈亏。若选择单一产品重复计算，将进行替换。
+</blockquote>
+<div style="padding: 10px;">
+    <form class="layui-form" action="/fxglb/calcPnlReport" method="post">
+        {% csrf_token %}
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">数据日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="searchDate" lay-verify="required" id="searchDate" placeholder="必选" autocomplete="off" />
+            </div>
+            <label class="layui-form-label">日报日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="calcDate" id="calcDate" placeholder="默认今日" autocomplete="off" />
+            </div>
+            <label class="layui-form-label">产品名称</label>
+            <div class="layui-input-inline">
+                <select name="productName" id="productNameSelect" lay-filter="name" lay-search="" class="'productNameSelect">
+                    <option value="">默认全部产品</option>
+                </select>
+            </div>
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="saveBtn">计算盈亏</button>
+        </div>
+    </div>
+    </form>
+</div>
+<div class="layui-form" style="padding: 10px;">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">数据日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="checkDate" id="checkDate" placeholder="" autocomplete="off" />
+            </div>
+            <label class="layui-form-label">产品名称</label>
+            <div class="layui-input-inline">
+                <select name="productNameCheck" id="productNameCheck" lay-filter="productNameCheck" lay-search="" class="layui-input">
+                    <option value="全部">全部产品</option>
+                </select>
+            </div>
+            <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="searchBtn">查询盈亏</button>
+        </div>
+    </div>
+</div>
+<div style="padding: 20px;">
+    {##日报盈亏表#}
+    <table class="layui-hide" id="pnlTotal"  lay-filter="pnlTotal"></table>
+    <table class="layui-hide" id="pnlReport"  lay-filter="pnlReport"></table>
+</div>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+
+{#表单功能#}
+<script>
+layui.use(['form', 'layedit', 'laydate'], function(){
+  var form = layui.form
+      ,laydate = layui.laydate;
+  var $ = layui.jquery;
+        //日期搜索
+        laydate.render({
+            elem: '#searchDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+        laydate.render({
+            elem: '#calcDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+        laydate.render({
+            elem: '#checkDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+    //下拉选框
+      $(function(){
+          $.post("../availableProductName", function(data){
+              for (var k in data.data.productNameData)
+              {
+                  $("#productNameSelect").append("<option value='"+data.data.productNameData[k].productName + "'>"+data.data.productNameData[k].productName +"</option>");
+                  $("#productNameCheck").append("<option value='"+data.data.productNameData[k].productName + "'>"+data.data.productNameData[k].productName +"</option>");
+              }
+              layui.use('form', function(){
+                  var form = layui.form;
+                  form.render();
+              });
+              }
+          );
+      })
+
+});
+</script>
+
+{#表格#}
+<script>
+    layui.use(['table', 'laydate','form', 'jquery','laypage'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var pnlReport = table.render({
+            elem: '#pnlReport'
+            , url: '/fxglb/getFundPnlReportData'
+            , toolbar: '#toolbarDemo'
+            , title: '产品盈亏表'
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.fundPnlReportData)
+                fundPnlReportData = res.data.fundPnlReportData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                  {field:"date", title: '数据日期', align: 'center',fixed: 'left',width: '7%', minWidth: 200 }
+                , {field:"productName", title: '产品名称', align: 'center',fixed: 'left',width: '12%', minWidth: 200 }
+                , {field:"acBuyAmount", title: '累计申购份额', align: 'center',width: '8%' }
+                , {field:"acSellAmount", title: '累计赎回份额', align: 'center',width: '8%' }
+                , {field:"buyCashAmount", title: '申购款', align: 'center',width: '7%' }
+                , {field:"sellCashAmount", title: '赎回款', align: 'center',width: '7%' }
+                , {field:"sellCost", title: '赎回成本', align: 'center',width: '7%' }
+                , {field:"cashDiv", title: '现金分红', align: 'center',width: '7%' }
+                , { field:"todayNetValue", title: '今日单位净值', align: 'center',width: '7%' }
+                , { field:"todayPnl", title: '当日盈亏', align: 'center',width: '10%' }
+                , { field:"cumPnl", title: '累计总盈亏', align: 'center',width: '10%' }
+                , { field:"var", title: 'VaR', align: 'center',width: '10%' }
+                {#,{fixed: 'right', title: '操作', width:150, align:'center', toolbar: '#barDemo'}#}
+            ]]
+            , page: true
+        });
+        var pnlTotal = table.render({
+            elem: '#pnlTotal'
+            , url: '/fxglb/getFundPnlReportData'
+            , title: '产品单日盈亏加总表'
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.fundTotalData)
+                fundTotalData = res.data.fundTotalData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "data": res.data.fundTotalData //解析数据列表
+                };
+            }
+            , cols: [[
+                  {field:"date", title: '数据日期', align: 'center'}
+                , {field:"productName", title: '产品数量', align: 'center'}
+                , {field:"acBuyAmount", title: '累计申购份额', align: 'center'}
+                , {field:"acSellAmount", title: '累计赎回份额', align: 'center'}
+                , {field:"buyCashAmount", title: '申购款', align: 'center'}
+                , {field:"sellCashAmount", title: '赎回款', align: 'center'}
+                , {field:"sellCost", title: '赎回成本', align: 'center'}
+                , {field:"cashDiv", title: '现金分红', align: 'center'}
+                , { field:"todayPnl", title: '当日盈亏', align: 'center'}
+                , { field:"var", title: 'VaR', align: 'center'}
+            ]]
+        });
+        //监听提交
+        form.on('submit(searchBtn)', function (data) {
+            var data = data.field;
+            var checkDate = data.checkDate;
+            var productNameCheck = data.productNameCheck;
+            pnlReport.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": checkDate,
+                    "productNameCheck": productNameCheck
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+            pnlTotal.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": checkDate,
+                    "productNameCheck": productNameCheck
+                }
+            });
+        });
+    });
+</script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+
+
+</body>
+</html>

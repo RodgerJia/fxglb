@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>测试页1</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="../static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="tradeinfo">新增交易记录</a></dd>
+      <dd><a href="newproduct">新审批产品</a></dd>
+      <dd><a href="modifyamt">修改总办会额度</a></dd>
+      <dd><a href="unitdata">录入每日基金净值</a></dd>
+      <dd><a href="calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+  <li class="layui-nav-item layui-this">
+     <a href="javascript:;">测试页</a>
+     <dl class="layui-nav-child">
+      <dd class="layui-this"><a href="test1">测试页1</a></dd>
+      <dd><a href="test2">测试页2</a></dd>
+      <dd><a href="test3">测试页3</a></dd>
+    </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>测试页1</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    TEST!!!
+    <br>*test1
+
+</blockquote>
+
+
+<form id='formDemo' action="" method='POST' class="layui-form">
+    <input type="text" class="cell-input"name="type" lay-verify="type|required" placeholder="类型" autocomplete="off" />
+    <input type="text" class="cell-input"name="address" lay-verify="address|required" placeholder="请选择钱包地址" autocomplete="off" />
+    <input type="submit" class="btn-block btn-primary address_save" value="保存" lay-filter="formDemo" lay-submit/>
+</form>
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<script src="/static/xm-select.js" charset="utf-8"></script>
+
+{#表单功能#}
+<script>
+layui.use(['form', 'layedit', 'laydate','layer'], function() {
+    var form = layui.form
+        , laydate = layui.laydate;
+    var layer = layui.layer;
+    var layedit = layui.layedit;
+
+
+    layui.use('form', function () {
+        var form = layui.form;
+        //自定义验证规则
+        form.verify({
+            type: function (value) {
+                if (value == 0) {
+                    return '请选择正确种类';
+                }
+            }
+            , address: function (value) {
+                if (value.length == 0)  {
+                    return '地址不能为空';
+                }
+            }
+        });
+
+
+    });
+})
+</script>
+
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+</body>
+</html>

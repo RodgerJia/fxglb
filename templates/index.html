@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>银河期货风险管理部</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<script src="https://lib.sinaapp.com/js/jquery/2.0.2/jquery-2.0.2.min.js"></script>
+<script type="text/javascript" >
+
+
+  function Show(element) {
+    var oldhtml = element.innerHTML;
+    if (oldhtml == null || oldhtml.length == 0) {
+	    return alert("不能为空!");
+    }
+
+    var newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.value = oldhtml;
+    newInput.style.width = oldhtml.length*14 + 'px';
+    newInput.onblur = function() {
+      element.innerHTML = this.value == oldhtml ? oldhtml : this.value;
+      var tr1 = element.parentNode;
+
+            rliId = tr1.cells[0].innerText;
+            updateName = element.getAttribute("name")
+
+            updateData = this.value;
+            $.ajax({
+            url: "/fxglb/updateRiskLimit?index=" + rliId+"&updateName="+updateName+"&updateData="+updateData,
+            success: function (res) {
+                console.log(res)
+                if (res.code == 0) {
+                    alert("成功执行"+res.data+"条！")
+
+                }
+            }
+        })
+
+    }
+
+    element.innerHTML = '';
+    element.appendChild(newInput);
+    newInput.setSelectionRange(0, oldhtml.length);
+    newInput.focus();
+
+  }
+</script>
+
+<body >
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item layui-this"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="add/tradeinfo">新增交易记录</a></dd>
+      <dd><a href="add/newproduct">新审批产品</a></dd>
+      <dd><a href="add/modifyamt">修改总办会额度</a></dd>
+      <dd><a href="add/unitdata">录入每日基金净值</a></dd>
+      <dd><a href="add/calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="add/calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="report/combinedStat">合并报表统计</a></dd>
+      <dd><a href="report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">测试页</a>
+     <dl class="layui-nav-child">
+      <dd><a href="test/test1">测试页1</a></dd>
+      <dd><a href="test/test2">测试页2</a></dd>
+    </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>主页</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+  专业、高效、合规、协同，以专业体现价值
+  <br>——银河期货核心价值观
+</blockquote>
+<form action="/fxglb/checkRisk" method="get">
+<div class="layui-form" >
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">查询日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="riskDate" id="riskDate"  autocomplete="off" value={{riskDate}} />
+            </div>
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn  layui-btn-normal"  type="submit" >风险检查</button>
+        </div>
+    </div>
+</div>
+<div style="padding: 20px;" class="layui-form" lay-filter="myForm">
+    <blockquote class="layui-elem-quote" id="checkResult" style="font-weight: bold; font-size: x-large;margin-bottom: 30px; width: 45%"></blockquote>
+    <blockquote class="layui-elem-quote" id="tips" style="font-weight: bold; font-size: x-large;margin-bottom: 30px; width: 45%"></blockquote>
+    <fieldset class="layui-elem-field layui-col-xs6 layui-col-sm6 layui-col-md6" style="width: 45%">
+      <legend>银河期货L1\L2风险限额（单位：亿元）</legend>
+        <table class="layui-table" >
+                <colgroup>
+                  <col width="100">
+                  <col width="200">
+                  <col width="50">
+                  <col width="50">
+                  <col>
+                </colgroup>
+                <thead>
+                  <tr  style="background-color: #1351a0;">
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">限额类别</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">限额指标名称</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">限额值</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">指标值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td colspan="4" align="center" style="background-color: #c6ddfc; font-weight: bold">L1级风险限额</td>
+                  </tr>
+                  {% for rliData in rliDataSet %}
+                      {% if rliData.riskLevel == "L1级风险限额" and rliData.targetTableName == "risklimit_v" %}
+                          <tr>
+                            <td style="display: none">{{rliData.index}}</td>
+                            <td name="limitType" ondblclick="Show(this)">{{rliData.limitType}}</td>
+                            <td name="limitTargetName" ondblclick="Show(this)">{{rliData.limitTargetName}}</td>
+                            <td name="limitValue" ondblclick="Show(this)">{{rliData.limitValue}}</td>
+                            <td>{{rliData.targetValueTag}}</td>
+                          </tr>
+                      {%endif%}
+                  {% empty %}
+                    暂时无数据
+                  {%endfor%}
+
+                    <tr>
+                    <td colspan="4" align="center" style="background-color: #c6ddfc; font-weight: bold">L2级风险限额</td>
+                  </tr>
+                    {% for rliData in rliDataSet %}
+                      {% if rliData.riskLevel == "L2级风险限额" and rliData.targetTableName == "risklimit_v" %}
+                          <tr><td style="display: none">{{rliData.index}}</td>
+                            <td name="limitType" ondblclick="Show(this)">{{rliData.limitType}}</td>
+                            <td name="limitTargetName" ondblclick="Show(this)">{{rliData.limitTargetName}}</td>
+                            <td name="limitValue" ondblclick="Show(this)">{{rliData.limitValue}}</td>
+                            <td>{{rliData.targetValueTag}}</td>
+                          </tr>
+                      {%endif%}
+                  {% empty %}
+                    暂时无数据
+                  {%endfor%}
+
+                </tbody>
+      </table>
+
+      <legend>银河期货自有资金投资（单位：万元）</legend>
+        <table class="layui-table" id="productTable" lay-filter="productTable">
+      </table>
+    </fieldset>
+    <fieldset class="layui-elem-field layui-col-xs6 layui-col-sm6 layui-col-md6" style="margin-left: 20px">
+      <legend>银河德睿L1\L2风险限额（单位：亿元）</legend>
+        <table class="layui-table" >
+                <colgroup>
+                  <col width="80">
+                  <col width="80">
+                  <col width="200">
+                  <col width="50">
+                  <col width="50">
+                  <col>
+                </colgroup>
+                <thead>
+                  <tr  style="background-color: #1351a0;">
+                      <th style="background-color: #1351a0; color: white; font-weight: bold">业务类型</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">限额类别</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">限额指标名称</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">限额值</th>
+                    <th style="background-color: #1351a0; color: white; font-weight: bold">指标值</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                    <td colspan="5" align="center" style="background-color: #c6ddfc; font-weight: bold">L1级风险限额</td>
+                  </tr>
+                   {% for rliData in rliDataSet %}
+                      {% if rliData.riskLevel == "L1级风险限额" and rliData.targetTableName == "deruiLimitData" %}
+                          <tr><td style="display: none">{{rliData.index}}</td>
+                            <td ondblclick="Show(this)">{{ rliData.businessType}}</td>
+                            <td ondblclick="Show(this)">{{rliData.limitType}}</td>
+                            <td ondblclick="Show(this)">{{rliData.limitTargetName}}</td>
+                            <td ondblclick="Show(this)">{{rliData.limitValue}}</td>
+                            <td>{{rliData.targetValueTag}}</td>
+                          </tr>
+                      {%endif%}
+                  {% empty %}
+                    暂时无数据
+                  {%endfor%}
+                  <tr>
+                    <td colspan="5" align="center" style="background-color: #c6ddfc; font-weight: bold">L2级风险限额</td>
+                  </tr>
+                  {% for rliData in rliDataSet %}
+                      {% if rliData.riskLevel == "L2级风险限额" and rliData.targetTableName == "deruiLimitData" %}
+                          <tr><td style="display: none">{{rliData.index}}</td>
+                            <td ondblclick="Show(this)">{{ rliData.businessType}}</td>
+                            <td ondblclick="Show(this)">{{rliData.limitType}}</td>
+                            <td ondblclick="Show(this)">{{rliData.limitTargetName}}</td>
+                            <td ondblclick="Show(this)">{{rliData.limitValue}}</td>
+                            <td>{{rliData.targetValueTag}}</td>
+                          </tr>
+                      {%endif%}
+                  {% empty %}
+                    暂时无数据
+                  {%endfor%}
+                </tbody>
+      </table>
+    </fieldset>
+</div>
+</form>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+
+<script>
+
+
+    layui.use(['table', 'laydate', 'form', 'jquery'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var projectList = []
+        riskDate = document.getElementById("riskDate").value
+        //日期搜索
+        laydate.render({
+            elem: '#riskDate'
+            , type: "date"
+            , format: 'yyyy-MM-dd'
+            , max: new Date().toLocaleString()
+        });
+        {#表格#}
+        var productTableIns = table.render({
+            elem: '#productTable'
+            , url: '/fxglb/checkProductSituation?date=' + riskDate
+            , title: '数据表'
+            , initSort: {field:'status', type:'asc'}
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.productSituation)
+                productSituation = res.data.productSituation;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.productSituation //解析数据列表
+                };
+            }
+            , cols: [[
+                  {field:"productName", title: '产品名称', align: 'center' }
+                , {field:"sector", title: '负责部门', align: 'center' }
+                , {field:"totalPnl", title: '总盈亏', align: 'center' }
+                , {field:"alert", title: '风控预警线', align: 'center' }
+                , {field:"clean", title: '风控清盘线', align: 'center' }
+                , {field:"situation", title: '当前情况', align: 'center' }
+            ]]
+
+        });
+        $.ajax({
+            url: "/fxglb/checkProductSituation?date=" + riskDate,
+            success: function (res) {
+                console.log(res)
+                if (res.code == 0) {
+                    let data = res.data
+                    document.getElementById("tips").innerHTML = data.tips;
+
+                }
+            }
+        })
+
+
+        form.on('submit(checkRisk)', function (data) {
+            $.ajax({
+                url: "/fxglb/checkRisk?date=" + data.field.riskDate,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 2000) {
+                        let data = res.data
+                        document.getElementById("checkResult").innerHTML = '<span>当日无超董事会授权及L1\\L2限额情况</span>';
+
+                        if (data[0].productAmt >= 3.5){
+                            document.getElementById("productAmt").innerHTML= '<span style="color: #c10000">'+data[0].productAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("productAmt").innerHTML= '<span>'+data[0].productAmt+'</span>';
+                        }
+                        if (data[0].cashAmt >= 15){
+                            document.getElementById("cashAmt").innerHTML= '<span style="color: #c10000">'+data[0].cashAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("cashAmt").innerHTML= '<span>'+data[0].cashAmt+'</span>';
+                        }
+                        if (-data[0].yearPnl >= 0.372){
+                            document.getElementById("yearPnl").innerHTML= '<span style="color: #c10000">'+data[0].yearPnl+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("yearPnl").innerHTML= '<span>'+data[0].yearPnl+'</span>';
+                        }
+                        if (-data[0].yearPnl >= 0.6){
+                            document.getElementById("yearPnlAlarm").innerHTML= '<span style="color: #c10000">'+data[0].yearPnl+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1止损限额触及预警值，情况如下</span>';
+                        }else{
+                            document.getElementById("yearPnlAlarm").innerHTML= '<span>'+data[0].yearPnl+'</span>';
+                        }
+                        if (data[0].managerAmt >= 0.6){
+                            document.getElementById("managerAmt").innerHTML= '<span style="color: #c10000">'+data[0].managerAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("managerAmt").innerHTML= '<span>'+data[0].managerAmt+'</span>';
+                        }
+                        if (data[0].netECratio_sup <= 100){
+                            document.getElementById("netECratio_sup").innerHTML= '<span style="color: #c10000">'+data[0].netECratio_sup+'%</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1流动性限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("netECratio_sup").innerHTML= '<span>'+data[0].netECratio_sup+'%</span>';
+                        }
+                        if (data[0].netEAratio_sup <= 20){
+                            document.getElementById("netEAratio_sup").innerHTML= '<span style="color: #c10000">'+data[0].netEAratio_sup+'%</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1流动性限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("netEAratio_sup").innerHTML= '<span>'+data[0].netEAratio_sup+'%</span>';
+                        }
+                        if (data[0].liqALratio_sup <= 100){
+                            document.getElementById("liqALratio_sup").innerHTML= '<span style="color: #c10000">'+data[0].liqALratio_sup+'%</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1流动性限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("liqALratio_sup").innerHTML= '<span>'+data[0].liqALratio_sup+'%</span>';
+                        }
+                        if (data[0].netLAratio_sup >= 150){
+                            document.getElementById("netLAratio_sup").innerHTML= '<span style="color: #c10000">'+data[0].netLAratio_sup+'%</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L1流动性限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("netLAratio_sup").innerHTML= '<span>'+data[0].netLAratio_sup+'%</span>';
+                        }
+
+                        if (data[0].l1_creditAmt_nonSecBank_usable >= 15){
+                            document.getElementById("l1_creditAmt_nonSecBank_usable").innerHTML= '<span style="color: #c10000">'+data[0].l1_creditAmt_nonSecBank_usable+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_creditAmt_nonSecBank_usable").innerHTML= '<span>'+data[0].l1_creditAmt_nonSecBank_usable+'</span>';
+                        }
+                        if (data[0].l1_creditAmt_nonSecBank_used >= 15){
+                            document.getElementById("l1_creditAmt_nonSecBank_used").innerHTML= '<span style="color: #c10000">'+data[0].l1_creditAmt_nonSecBank_used+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_creditAmt_nonSecBank_used").innerHTML= '<span>'+data[0].l1_creditAmt_nonSecBank_used+'</span>';
+                        }
+                        if (data[0].l1_creditAmt_secBank_usable >= 100){
+                            document.getElementById("l1_creditAmt_secBank_usable").innerHTML= '<span style="color: #c10000">'+data[0].l1_creditAmt_secBank_usable+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_creditAmt_secBank_usable").innerHTML= '<span>'+data[0].l1_creditAmt_secBank_usable+'</span>';
+                        }
+                        if (data[0].l1_creditAmt_secBank_used >= 100){
+                            document.getElementById("l1_creditAmt_secBank_used").innerHTML= '<span style="color: #c10000">'+data[0].l1_creditAmt_secBank_used+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_creditAmt_secBank_used").innerHTML= '<span>'+data[0].l1_creditAmt_secBank_used+'</span>';
+                        }
+                        if (data[0].l1_loss >= 1.2){
+                            document.getElementById("l1_loss").innerHTML= '<span style="color: #c10000">'+data[0].l1_loss+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_loss").innerHTML= '<span>'+data[0].l1_loss+'</span>';
+                        }
+                        if (data[0].l1_cashDelta >= 19.85){
+                            document.getElementById("l1_cashDelta").innerHTML= '<span style="color: #c10000">'+data[0].l1_cashDelta+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1敞口限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_cashDelta").innerHTML= '<span>'+data[0].l1_cashDelta+'</span>';
+                        }
+                        if (data[0].l1_var >= 0.47){
+                            document.getElementById("l1_var").innerHTML= '<span style="color: #c10000">'+data[0].l1_var+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1VaR限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_var").innerHTML= '<span>'+data[0].l1_var+'</span>';
+                        }
+                        if (data[0].l1_assetAmt <= 0.1){
+                            document.getElementById("l1_assetAmt").innerHTML= '<span style="color: #c10000">'+data[0].l1_assetAmt*100+'%</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L1流动性限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l1_assetAmt").innerHTML= '<span>'+data[0].l1_assetAmt+'%</span>';
+                        }
+
+                        if (data[0].l2_otc_cashDelta >= 1.65){
+                            document.getElementById("l2_otc_cashDelta").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_cashDelta+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务敞口限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_cashDelta").innerHTML= '<span>'+data[0].l2_otc_cashDelta+'</span>';
+                        }
+                        if (data[0].l2_otc_singleCreditAmt_nonSecBank > 0.1){
+                            document.getElementById("l2_otc_singleCreditAmt_nonSecBank").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_singleCreditAmt_nonSecBank+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_singleCreditAmt_nonSecBank").innerHTML= '<span>'+data[0].l2_otc_singleCreditAmt_nonSecBank+'</span>';
+                        }
+                        if (data[0].l2_otc_singleCreditAmt_secBank > 5){
+                            document.getElementById("l2_otc_singleCreditAmt_secBank").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_singleCreditAmt_secBank+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_singleCreditAmt_secBank").innerHTML= '<span>'+data[0].l2_otc_singleCreditAmt_secBank+'</span>';
+                        }
+                        if (data[0].l2_otc_creditAmt_nonSecBank > 7.5){
+                            document.getElementById("l2_otc_creditAmt_nonSecBank").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_creditAmt_nonSecBank+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务授信限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_creditAmt_nonSecBank").innerHTML= '<span>'+data[0].l2_otc_creditAmt_nonSecBank+'</span>';
+                        }
+                        if (data[0].l2_otc_creditAmt_secBank > 100){
+                            document.getElementById("l2_otc_creditAmt_secBank").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_creditAmt_secBank+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务授信限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_creditAmt_secBank").innerHTML= '<span>'+data[0].l2_otc_creditAmt_secBank+'</span>';
+                        }
+                        if (data[0].l2_otc_loss >= 0.15){
+                            document.getElementById("l2_otc_loss").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_loss+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_loss").innerHTML= '<span>'+data[0].l2_otc_loss+'</span>';
+                        }
+                        if (data[0].l2_otc_var >= 0.05){
+                            document.getElementById("l2_otc_var").innerHTML= '<span style="color: #c10000">'+data[0].l2_otc_var+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2场外业务VaR限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_otc_var").innerHTML= '<span>'+data[0].l2_otc_var+'</span>';
+                        }
+
+                        if (data[0].l2_omm_cashDelta >= 1.2){
+                            document.getElementById("l2_omm_cashDelta").innerHTML= '<span style="color: #c10000">'+data[0].l2_omm_cashDelta+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2做市业务敞口限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_omm_cashDelta").innerHTML= '<span>'+data[0].l2_omm_cashDelta+'</span>';
+                        }
+                        if (data[0].l2_omm_loss >= 0.12){
+                            document.getElementById("l2_omm_loss").innerHTML= '<span style="color: #c10000">'+data[0].l2_omm_loss+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2做市业务止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_omm_loss").innerHTML= '<span>'+data[0].l2_omm_loss+'</span>';
+                        }
+                        if (data[0].l2_omm_var >= 0.04){
+                            document.getElementById("l2_omm_var").innerHTML= '<span style="color: #c10000">'+data[0].l2_omm_var+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2做市业务VaR限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_omm_var").innerHTML= '<span>'+data[0].l2_omm_var+'</span>';
+                        }
+
+                        if (data[0].l2_c_cashDelta >= 1){
+                            document.getElementById("l2_c_cashDelta").innerHTML= '<span style="color: #c10000">'+data[0].l2_c_cashDelta+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2期现业务敞口限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_c_cashDelta").innerHTML= '<span>'+data[0].l2_c_cashDelta+'</span>';
+                        }
+                        if (data[0].l2_c_singleCreditAmt >= 0.5){
+                            document.getElementById("l2_c_singleCreditAmt").innerHTML= '<span style="color: #c10000">'+data[0].l2_c_singleCreditAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2期现业务集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_c_singleCreditAmt").innerHTML= '<span>'+data[0].l2_c_singleCreditAmt+'</span>';
+                        }
+                        document.getElementById("l2_c_creditAmt_usable").innerHTML= '<span>'+data[0].l2_c_creditAmt_usable+'</span>';
+                        if (data[0].l2_c_creditAmt_used >= 7.5){
+                            document.getElementById("l2_c_creditAmt_used").innerHTML= '<span style="color: #c10000">'+data[0].l2_c_creditAmt_used+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2期现业务授信限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_c_creditAmt_used").innerHTML= '<span>'+data[0].l2_c_creditAmt_used+'</span>';
+                        }
+                        if (data[0].l2_c_loss >= 0.1){
+                            document.getElementById("l2_c_loss").innerHTML= '<span style="color: #c10000">'+data[0].l2_c_loss+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2期现业务止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_c_loss").innerHTML= '<span>'+data[0].l2_c_loss+'</span>';
+                        }
+                        if (data[0].l2_c_var >= 0.03){
+                            document.getElementById("l2_c_var").innerHTML= '<span style="color: #c10000">'+data[0].l2_c_var+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2期现业务VaR限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_c_var").innerHTML= '<span>'+data[0].l2_c_var+'</span>';
+                        }
+
+                        if (data[0].l2_sigma_productCashDelta >= 15){
+                            document.getElementById("l2_sigma_productCashDelta").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_productCashDelta+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2金融产品投资业务敞口限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_productCashDelta").innerHTML= '<span>'+data[0].l2_sigma_productCashDelta+'</span>';
+                        }
+                        if (data[0].l2_sigma_singleEquityAmt > 0.5){
+                            document.getElementById("l2_sigma_singleEquityAmt").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_singleEquityAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2金融产品投资业务集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_singleEquityAmt").innerHTML= '<span>'+data[0].l2_sigma_singleEquityAmt+'</span>';
+                        }
+                        if (data[0].l2_sigma_singleFIAmt > 1.5){
+                            document.getElementById("l2_sigma_singleFIAmt").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_singleFIAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2金融产品投资业务集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_singleFIAmt").innerHTML= '<span>'+data[0].l2_sigma_singleFIAmt+'</span>';
+                        }
+                        if (data[0].l2_sigma_singleMixAmt > 1){
+                            document.getElementById("l2_sigma_singleMixAmt").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_singleMixAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2金融产品投资业务集中度限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_singleMixAmt").innerHTML= '<span>'+data[0].l2_sigma_singleMixAmt+'</span>';
+                        }
+                        if (data[0].l2_sigma_productLoss >= 0.75){
+                            document.getElementById("l2_sigma_productLoss").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_productLoss+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2金融产品投资业务止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_productLoss").innerHTML= '<span>'+data[0].l2_sigma_productLoss+'</span>';
+                        }
+                        if (data[0].l2_sigma_productVaR >= 0.3){
+                            document.getElementById("l2_sigma_productVaR").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_productVaR+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2金融产品投资业务VaR限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_productVaR").innerHTML= '<span>'+data[0].l2_sigma_productVaR+'</span>';
+                        }
+
+                        if (data[0].l2_sigma_cashDelta >= 1){
+                            document.getElementById("l2_sigma_cashDelta").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_cashDelta+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2自营业务敞口限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_cashDelta").innerHTML= '<span>'+data[0].l2_sigma_cashDelta+'</span>';
+                        }
+                        if (data[0].l2_sigma_loss >= 0.15){
+                            document.getElementById("l2_sigma_loss").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_loss+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2自营业务止损限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_loss").innerHTML= '<span>'+data[0].l2_sigma_loss+'</span>';
+                        }
+                        if (data[0].l2_sigma_var >= 0.3){
+                            document.getElementById("l2_sigma_var").innerHTML= '<span style="color: #c10000">'+data[0].l2_sigma_var+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河德睿L2自营业务VaR限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("l2_sigma_var").innerHTML= '<span>'+data[0].l2_sigma_var+'</span>';
+                        }
+
+                        if (data[0].hedgeAmt >= 8){
+                            document.getElementById("hedgeAmt").innerHTML= '<span style="color: #c10000">'+data[0].hedgeAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L2规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("hedgeAmt").innerHTML= '<span>'+data[0].hedgeAmt+'</span>';
+                        }
+                        if (data[0].fixedAmt >= 4){
+                            document.getElementById("fixedAmt").innerHTML= '<span style="color: #c10000">'+data[0].fixedAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L2规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("fixedAmt").innerHTML= '<span>'+data[0].fixedAmt+'</span>';
+                        }
+                        if (data[0].equityAmt >= 6){
+                            document.getElementById("equityAmt").innerHTML= '<span style="color: #c10000">'+data[0].equityAmt+'</span>';
+                            document.getElementById("checkResult").innerHTML = '<span>银河期货L2规模限额超限，情况如下</span>';
+                        }else{
+                            document.getElementById("equityAmt").innerHTML= '<span>'+data[0].equityAmt+'</span>';
+                        }
+                    }
+                }
+            })
+
+            $.ajax({
+                url: "/fxglb/checkProductSituation?date=" + data.field.riskDate,
+                success: function (res) {
+                    console.log(res)
+                    if (res.code == 0) {
+                        let data = res.data
+                        document.getElementById("tips").innerHTML = data.tips;
+
+                    }
+                }
+            })
+            //监听提交
+            var data = data.field;
+            var dates = data.riskDate;
+            productTableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": dates
+                }
+            });
+        });
+
+    });
+</script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+</body>
+</html>

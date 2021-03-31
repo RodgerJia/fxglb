@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>修改总办会额度</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item layui-this">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="tradeinfo">新增交易记录</a></dd>
+      <dd><a href="newproduct">新审批产品</a></dd>
+      <dd class="layui-this"><a href="modifyamt">修改总办会额度</a></dd>
+      <dd><a href="unitdata">录入每日基金净值</a></dd>
+      <dd><a href="calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+      <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>每日基金数据录入-修改总办会额度</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    更新总办会额度表
+    <br>*极少数事件
+</blockquote>
+
+<div style="padding: 30px;">
+    {#表单+按钮#}
+    <form class="layui-form" action="/fxglb/modifyAmtInfo" method="post">
+        {%csrf_token%}
+        {##确认日期#}
+      <div class="layui-form-item">
+          <div class="layui-inline">
+              <label class="layui-form-label">确认日期</label>
+              <div class="layui-input-inline">
+                <input type="text" name="confirmDate" id="confirmDate" lay-verify="date" placeholder="yyyy-MM-dd" autocomplete="off" class="layui-input">
+              </div>
+          </div>
+      </div>
+        {##修改后总办会额度#}
+      <div class="layui-form-item">
+        <div class="layui-inline layui-col-md3">
+            <label class="layui-form-label">修改额度</label>
+            <div class="layui-input-block">
+              <input type="text" name="totalAmount" class="layui-input">
+            </div>
+        </div>
+      </div>
+        {##确认按钮#}
+        <div class="layui-form-item">
+            <button class="layui-btn  layui-btn-normal layui-col-md1" lay-submit="" lay-filter="saveBtn">保存并更新</button>
+        </div>
+    </form>
+</div>
+<div style="padding: 20px;">
+    {##总办会额度表#}
+    <table class="layui-hide" id="totalAmount"  lay-filter="totalAmount"></table>
+</div>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+
+{#表单功能#}
+<script>
+layui.use(['form', 'layedit', 'laydate'], function(){
+  var form = layui.form
+      ,laydate = layui.laydate;
+
+  //确认日期
+  laydate.render({
+    elem: '#confirmDate'
+      , max: new Date().toLocaleString()
+  });
+
+});
+</script>
+
+{#表格#}
+<script>
+    layui.use(['table', 'laydate','form', 'jquery','laypage'], function () {
+        var table = layui.table;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var totalAmountIns = table.render({
+            elem: '#totalAmount'
+            , url: '/fxglb/getTotalAmountInfo'
+            , toolbar: '#toolbarDemo'
+            , title: '数据表'
+            ,defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.totalAmountData)
+                totalAmountData = res.data.totalAmountData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                  {field:"date", title: '数据日期', align: 'center' }
+                , {field:"confirmDate", title: '确认日期', align: 'center' }
+                , {field:"totalAmount", title: '总额度', align: 'center' }
+                , {field:"newUsed", title: '新增审批', align: 'center' }
+                , {field:"usedAmount", title: '已审批额度', align: 'center' }
+                , {field:"newBack", title: '已赎回额度', align: 'center' }
+                , { field:"usableAmount", title: '剩余额度', align: 'center' }
+                , { field:"demo", title: '备注', align: 'center' }
+            ]]
+            , page: true
+        });
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            var data = data.field;
+            var dates = data.searchDate;
+
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": dates
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+
+
+        });
+    });
+</script>
+
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+</body>
+</html>

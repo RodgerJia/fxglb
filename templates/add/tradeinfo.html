@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>新增交易记录</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <link rel="stylesheet" href="/static/soulTable/soulTable.css" media="all"/>
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+    <img src="/static/layui/images/newlogo.gif"/>
+    <li class="layui-nav-item"><a href="../">主页</a></li>
+    <li class="layui-nav-item layui-this">
+        <a href="javascript:;">每日基金数据录入</a>
+        <dl class="layui-nav-child">
+            <dd class="layui-this"><a href="tradeinfo">新增交易记录</a></dd>
+            <dd><a href="newproduct">新审批产品</a></dd>
+            <dd><a href="modifyamt">修改总办会额度</a></dd>
+            <dd><a href="unitdata">录入每日基金净值</a></dd>
+            <dd><a href="calcpnlreport">计算日报盈亏数据</a></dd>
+            <dd><a href="calctruepnl">计算真实盈亏数据</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">报表查询</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+            <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+            <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+            <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">定期报告</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../periodicReport/dailyReport">日报</a></dd>
+            <dd><a href="../periodicReport/doubleWeeklyReport">双周报</a></dd>
+            <dd><a href="">月报</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a href="javascript:;">数据分析</a>
+        <dl class="layui-nav-child">
+            <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+            <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+        </dl>
+    </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+    <legend>每日基金数据录入-新增交易记录</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    申购仅更新申赎表
+    <br>赎回更新申赎表和总办会额度表
+    <br>*赎回时请务必填写赎回成本，手续费为选填
+    <br>*数据日期默认为今日。
+    <br>*若勾选历史补录：请选择日报日期，用于补填历史数据。（通常为确认日期+1天）
+    <br>*计算盈亏时，将通过日报日期判断该笔交易是否计算为当日（即计算盈亏界面的“日报日期”）。
+    <br>*分红“确认日期“填”分红登记日“，避免单日巨额亏损。（包括现金分红和分红再投）
+    <br>*申购时：交易款包含手续费，即实际支付金额。赎回时：交易款扣除手续费，即实际获得金额。
+    <br>*请勿重复提交
+</blockquote>
+
+<div style="padding: 30px;">
+    {#表单+按钮#}
+    <form class="layui-form layui-form-wd120" action="/fxglb/addTradeInfo" method="post">
+        {% csrf_token %}
+        {##交易类型 radio#}
+        <div class="layui-form-item">
+            <label class="layui-form-label">交易类型</label>
+            <div class="layui-input-block" id="tradeType">
+                <input type="radio" name="type" value="申购" title="申购" checked="">
+                <input type="radio" name="type" value="赎回" title="赎回">
+                <input type="radio" name="type" value="分红再投" title="分红再投">
+                <input type="radio" name="type" value="现金分红" title="现金分红">
+            </div>
+        </div>
+        {##申请日期+确认日期#}
+        <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">申请日期</label>
+                <div class="layui-input-block">
+                    <input type="text" name="applyDate" id="applyDate" lay-verify="date" placeholder="yyyy-MM-dd"
+                           autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">确认日期</label>
+                <div class="layui-input-block">
+                    <input type="text" name="confirmDate" id="confirmDate" lay-verify="date" placeholder="yyyy-MM-dd"
+                           autocomplete="off" class="layui-input">
+                </div>
+            </div>
+        </div>
+        {##产品名称 ************改为下拉选框，数据为fundBasicInfo表内产品全名#}
+        <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">产品名称</label>
+                <div class="layui-input-block">
+                    <select name="productName" id="productNameSelect" lay-filter="name" lay-verify="required"
+                            lay-search="" class="'productNameSelect">
+                        <option value="">请选择产品</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        {##交易份额，交易款，单位净值#}
+        <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">交易份额</label>
+                <div class="layui-input-block">
+                    <input type="text" name="tradeShare" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">交易款</label>
+                <div class="layui-input-block">
+                    <input type="text" name="tradeAmount" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">手续费</label>
+                <div class="layui-input-block">
+                    <input type="text" name="fee" class="layui-input">
+                </div>
+            </div>
+
+        </div>
+        {##使用申购净值计算，开关#}
+        <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">单位净值</label>
+                <div class="layui-input-block">
+                    <input type="text" name="unitNet" class="layui-input">
+                </div>
+            </div>
+        </div>
+
+        {##赎回成本#}
+        <div class="layui-form-item layui-col-md3">
+            <label class="layui-form-label">赎回成本</label>
+            <div class="layui-input-block">
+                <input type="text" name="cost" class="layui-input">
+            </div>
+        </div>
+        {##历史补录#}
+        <div class="layui-form-item">
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">历史补录</label>
+                <div class="layui-input-block">
+                    <input type="checkbox" name="isHis" lay-skin="primary" title="">
+                </div>
+            </div>
+            <div class="layui-inline layui-col-md3">
+                <label class="layui-form-label">日报日期</label>
+                <div class="layui-input-block">
+                    <input type="text" name="dataDate" id="dataDate" lay-verify="date" placeholder="yyyy-MM-dd"
+                           autocomplete="on" class="layui-input">
+                </div>
+            </div>
+        </div>
+
+        {##确认按钮#}
+        <div class="layui-form-item">
+            <button class="layui-btn  layui-btn-normal layui-col-md1" lay-submit="" lay-filter="saveBtn">保存并更新</button>
+        </div>
+    </form>
+</div>
+<div style="padding: 20px;padding-top:-10px">
+    {##申赎表格#}
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+<div style="padding: 20px;align-top:-20px">
+    {##总办会额度表#}
+    <table class="layui-hide" id="totalAmount" lay-filter="totalAmount"></table>
+</div>
+
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<script>
+    layui.config({
+        base: '/static/',   // 第三方模块所在目录
+        version: 'v1.5.21' // 插件版本号
+    }).extend({
+        soulTable: 'soulTable/soulTable',
+        tableChild: 'soulTable/tableChild',
+        tableMerge: 'soulTable/tableMerge',
+        tableFilter: 'soulTable/tableFilter',
+        excel: 'soulTable/excel',
+    });
+</script>
+
+{#表单功能#}
+<script>
+    layui.use(['form', 'layedit', 'laydate'], function () {
+        var form = layui.form
+            , laydate = layui.laydate;
+        var $ = layui.jquery;
+        //申请日期
+        laydate.render({
+            elem: '#applyDate'
+            , max: new Date().toLocaleString()
+        });
+        //确认日期
+        laydate.render({
+            elem: '#confirmDate'
+            , max: new Date().toLocaleString()
+        });
+        //数据日期
+        laydate.render({
+            elem: '#dataDate'
+            , max: new Date().toLocaleString()
+            , value: new Date()
+        });
+        //单选框：交易类型
+        form.render('radio', function (data) {
+            $('#tradeType input').removeAttr('checked');
+            $(data.elem).attr('checked', 'checked');
+        });
+
+        //下拉选框
+        $(function () {
+            $.post("../availableProductName", function (data) {
+                    for (var k in data.data.productNameData) {
+                        $("#productNameSelect").append("<option value='" + data.data.productNameData[k].productName + "'>" + data.data.productNameData[k].productName + "</option>");
+                    }
+                    layui.use('form', function () {
+                        var form = layui.form;
+                        form.render();
+                    });
+                }
+            );
+        })
+
+    });
+
+</script>
+
+{#表格#}
+<script>
+    layui.use(['table', 'laydate', 'form', 'jquery', 'laypage', 'soulTable'], function () {
+        var table = layui.table,
+            soulTable = layui.soulTable;
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.jquery;
+
+        var tableIns = table.render({
+            elem: '#test'
+            , url: '/fxglb/getTradeInfo'
+            , title: '产品申赎表'
+            , height: 300
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.tradeInfoData)
+                tradeInfoData = res.data.tradeInfoData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.tradeInfoData //解析数据列表
+                };
+            }
+            , cols: [[
+                {field: "date", title: '数据日期', align: 'center'}
+                , {field: "productName", title: '产品名称', align: 'center', filter: true}
+                , {field: "applyDate", title: '申请日期', align: 'center'}
+                , {field: "confirmDate", title: '确认日期', align: 'center'}
+                , {field: "tradeType", title: '交易类型', align: 'center'}
+                , {field: "tradeShare", title: '交易份额', align: 'center'}
+                , {field: "unitNet", title: '单位净值', align: 'center'}
+                , {field: "fee", title: '手续费', align: 'center'}
+                , {field: "tradeAmount", title: '交易款', align: 'center'}
+                , {field: "cost", title: '赎回成本', align: 'center'}
+            ]]
+            , filter: {
+                bottom: false
+            }
+            , done: function () {
+                soulTable.render(this)
+            }
+        });
+
+        var totalAmountIns = table.render({
+            elem: '#totalAmount'
+            , url: '/fxglb/getTotalAmountInfo'
+            , title: '数据表'
+            , defaultToolbar: ['filter', 'exports', 'print']
+            , parseData: function (res) { //res 即为原始返回的数据
+                console.log(res.data.totalAmountData)
+                totalAmountData = res.data.totalAmountData;
+                return {
+                    "code": 0, //解析接口状态
+                    "msg": "", //解析提示文本
+                    "count": res.data.total, //解析数据长度
+                    "data": res.data.data //解析数据列表
+                };
+            }
+            , cols: [[
+                {field: "date", title: '数据日期', align: 'center'}
+                , {field: "confirmDate", title: '确认日期', align: 'center'}
+                , {field: "totalAmount", title: '总额度', align: 'center'}
+                , {field: "newUsed", title: '新增审批', align: 'center'}
+                , {field: "usedAmount", title: '已审批额度', align: 'center'}
+                , {field: "newBack", title: '已赎回额度', align: 'center'}
+                , {field: "usableAmount", title: '剩余额度', align: 'center'}
+                , {field: "demo", title: '备注', align: 'center'}
+            ]]
+            , page: true
+        });
+
+        //监听提交
+        form.on('submit(saveBtn)', function (data) {
+            var data = data.field;
+            var dates = data.searchDate;
+
+            tableIns.reload({
+                where: { //设定异步数据接口的额外参数，任意设
+                    "date": dates
+                }
+                , page: {
+                    curr: 1 //重新从第 1 页开始
+                }
+            });
+
+
+        });
+    });
+</script>
+
+{#菜单#}
+<script>
+    layui.use('element', function () {
+        var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+        //监听导航点击
+        element.on('nav(demo)', function (elem) {
+            //console.log(elem)
+            layer.msg(elem.text());
+        });
+    });
+</script>
+
+
+</body>
+</html>

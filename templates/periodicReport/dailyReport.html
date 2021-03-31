@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>定期报告-日报</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+    <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+</head>
+<body>
+
+{#菜单#}
+<ul class="layui-nav" style="background-color:#444444 !important;">
+  <img src="/static/layui/images/newlogo.gif" />
+  <li class="layui-nav-item"><a href="../">主页</a></li>
+  <li class="layui-nav-item">
+    <a href="javascript:;">每日基金数据录入</a>
+    <dl class="layui-nav-child">
+      <dd><a href="../add/tradeinfo">新增交易记录</a></dd>
+      <dd><a href="../add/newproduct">新审批产品</a></dd>
+      <dd><a href="../add/modifyamt">修改总办会额度</a></dd>
+      <dd><a href="../add/unitdata">录入每日基金净值</a></dd>
+      <dd><a href="../add/calcpnlreport">计算日报盈亏数据</a></dd>
+      <dd><a href="../add/calctruepnl">计算真实盈亏数据</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">报表查询</a>
+     <dl class="layui-nav-child">
+      <dd><a href="../report/combinedStat">合并报表统计</a></dd>
+      <dd><a href="../report/productReportSec">产品投资报告（证券）</a></dd>
+      <dd><a href="../report/fundData">基金盈亏数据（收益率）</a></dd>
+      <dd><a href="../report/productReportBroke">基金盈亏数据（挂钩经纪）</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item layui-this">
+     <a href="javascript:;">定期报告</a>
+     <dl class="layui-nav-child">
+      <dd class="layui-this"><a href="dailyReport">日报</a></dd>
+      <dd><a href="doubleWeeklyReport">双周报</a></dd>
+      <dd><a href="">月报</a></dd>
+    </dl>
+  </li>
+  <li class="layui-nav-item">
+     <a href="javascript:;">数据分析</a>
+     <dl class="layui-nav-child">
+         <dd><a href="../dataAnalysis/companyAnalysis">公司业务分析</a></dd>
+      <dd><a href="../dataAnalysis/deruiSectorAnalysis">德睿业务分析</a></dd>
+     </dl>
+  </li>
+</ul>
+<fieldset class="layui-elem-field layui-field-title">
+  <legend>定期报告-日报</legend>
+</fieldset>
+<blockquote class="layui-elem-quote layui-quote-nm" style="margin-left: 20px;">
+    根据已有数据，自动生成日报
+    <br>*日报数据不回滚
+</blockquote>
+
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">报送信息</legend>
+    <div class="layui-field-box">
+        <div class="layui-inline layui-col-md3" >
+            <label class="layui-form-label" style="width:100px">公司监管指标</label>
+            <button type="button" class="layui-btn layui-btn-normal" id="uploadFinanceData" style="width:200px"><i class="layui-icon"></i>上传财务管理部报送表</button>
+        </div>
+        <div class="layui-inline layui-col-md3">
+            <label class="layui-form-label" style="width:100px">公司资管情况</label>
+            <button type="button" class="layui-btn layui-btn-normal" id="uploadRiskDailyData" style="width:200px"><i class="layui-icon"></i>上传公司风控日报</button>
+        </div>
+        <div class="layui-inline layui-col-md3">
+            <label class="layui-form-label" style="width:100px">德睿限额情况</label>
+            <button type="button" class="layui-btn layui-btn-normal" id="uploadDeruiLimitData" style="width:200px"><i class="layui-icon"></i>上传德睿数据采集表</button>
+        </div>
+        <div class="layui-inline layui-col-md3">
+            <label class="layui-form-label" style="width:100px">德睿业务情况</label>
+            <button type="button" class="layui-btn layui-btn-normal" id="uploadDeruiSectorData" style="width:200px"><i class="layui-icon"></i>上传德睿指标报送表</button>
+        </div>
+    </div>
+</fieldset>
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">补充信息</legend>
+    <div class="layui-field-box">
+        <form class="layui-form layui-form-wd120" action="/addDailyData" method="post">
+            {% csrf_token %}
+            <div class="layui-form-item">
+                <div class="layui-inline layui-col-md12">
+                    <label class="layui-form-label">数据日期</label>
+                    <div class="layui-input-inline">
+                        <input type="text" class="layui-input" name="dataDate" id="dataDate" placeholder="请选择日期" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">当日强平手数</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="closePos" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3">
+                    <label class="layui-form-label">当日新增穿仓损失</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="overLoss" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3" style="margin-left: -10px;margin-right: -10px">
+                    <label class="layui-form-label">年度累计穿仓损失</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="yearOverLoss" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-inline layui-col-md3" style="margin-left: -10px">
+                    <label class="layui-form-label">风险度超100%客户数</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="overRisk" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-col-md6">
+                    <label class="layui-form-label">重要事项</label>
+                    <div class="layui-input-block">
+                        <textarea placeholder="" class="layui-textarea" name="importantText" style="height: 120px;width:80%;margin-bottom: 10px"></textarea>
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <label class="layui-form-label">限额情况</label>
+                    <div class="layui-input-block">
+                        <textarea placeholder="当日无超董事会授权及L1\L2限额情况" class="layui-textarea" name="limitText" style="height: 120px; width:80%; margin-bottom: 10px"></textarea>
+                    </div>
+                </div>
+                <div class="layui-col-md3">
+                    <label class="layui-form-label">已审批未投资额度</label>
+                    <div class="layui-input-block" style="width:55%">
+                        <input type="text" class="layui-input" name="nonInvestAmount" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="layui-col-md12">
+                    <button class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="saveBtn" style="margin-left: 110px">保存数据</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</fieldset>
+<fieldset class="layui-elem-field" style="padding: 10px;">
+    <legend style="font-weight: bold">报表生成</legend>
+    <div class="layui-form" style="padding: 10px" >
+    {% csrf_token %}
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">数据日期</label>
+            <div class="layui-input-inline">
+                <input type="text" class="layui-input" name="searchDate" id="searchDate" placeholder="请选择日期" autocomplete="off" />
+            </div>
+            <button type="submit" class="layui-btn  layui-btn-normal" lay-submit="" lay-filter="searchBtn">生成日报</button>
+            <button class="layui-btn  layui-btn-normal" id="exportToPdf">导出日报</button>
+{#            <button class="layui-btn  layui-btn-normal" id="exportToWord">导出日报文字版</button>#}
+        </div>
+    </div>
+</div>
+</fieldset>
+
+<div style="padding: 20px; background-color: #F2F2F2;" class="layui-form" lay-filter="myForm">
+  <div class="layui-row" style= "width: 800px; margin-left:auto;margin-right:auto;" id="export_content">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+        <div class="layui-card-header" style="font-size: x-large;font-weight: bolder">
+                银河期货风险监测日报
+        </div>
+
+        <div class="layui-card-body">
+{#            标题信息#}
+            <div style="float: left;color: #8D8D8D;margin-top: -8px">
+                数据日期  <span id="date"></span>
+                <br>报告日期  <span id="reportDate"></span>
+            </div>
+            <div style="float: right;color: #8D8D8D;margin-top: -8px">
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;报告编制：风险管理部
+                <br><span id="num" style="float: right"></span>
+            </div>
+            <hr style="background-color:#c10000;height:2px !important;">
+            <div style="float: right">
+                除特别标注，报告同一单位：万元；"<span style="color: #c10000">&#x25B2</span>/<span style="color: #07a807">&#x25BC</span>"代表当日变动
+            </div>
+            <br>
+{#            重要事项#}
+            <fieldset class="layui-elem-field layui-field-title">
+                <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 重要事项风险报告</legend>
+            </fieldset>
+             <div class="layui-col-xs12 layui-col-sm12 layui-col-md12" >
+                <div id="importantText" style="height: 120px;width: 90%; margin-left: 30px;margin-top: -10px;margin-bottom: 10px; font-weight: bold; color: #c10000"></div>
+            </div>
+{#            监管指标 三个仪表盘#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 风险监管指标</legend>
+            </fieldset>
+            <div class="layui-row">
+                <div class="layui-col-xs4 layui-col-sm4 layui-col-md4" id="gauge1" style="height:280px;margin-bottom: -100px"></div>
+                <div class="layui-col-xs4 layui-col-sm4 layui-col-md4" id="gauge2" style="height:280px;margin-bottom: -100px"></div>
+                <div class="layui-col-xs4 layui-col-sm4 layui-col-md4" id="gauge3" style="height:280px;margin-bottom: -100px"></div>
+            </div>
+{#            限额执行情况#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 董事会风险授权及L1\L2级限额执行情况</legend>
+            </fieldset>
+            <div class="layui-col-xs12 layui-col-sm12 layui-col-md12" >
+                <div id="limitText" style="height: 50px;width: 90%; margin-left: 30px;margin-top: -10px;margin-bottom: 10px"></div>
+            </div>
+{#            公司风险概况#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 公司风险概况</legend>
+            </fieldset>
+            <div class="layui-row" style="margin-left: 30px">
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 经纪业务</div>
+                    <div style="margin-right: 25px;margin-bottom: 10px!important;">
+                        <table class="layui-table"  lay-skin="nob" lay-even="">
+                          <tbody>
+                          <tr>
+                              <td width ='60%'>当日强平（手）</td>
+                              <td width ='40%' align="center" id="closePos"></td>
+                          </tr>
+                            <tr>
+                              <td>当日新增穿仓损失</td>
+                                <td align="center" id="overLoss"></td>
+                            </tr>
+                            <tr>
+                              <td>年度累计穿仓损失</td>
+                                <td align="center" id="yearOverLoss"></td>
+                            </tr>
+                            <tr>
+                              <td>风险度超100%客户数（个）</td>
+                                <td align="center" id="overRisk"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                 <div class="layui-col-xs6 layui-col-sm6 layui-col-md6">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 资管业务</div>
+                    <div style="margin-right: 10px;margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="nob" lay-even="">
+                          <tbody>
+                          <tr>
+                              <td width ='70%'>产品总规模</td>
+                              <td width ='30%' align="center" id="totalAmount"></td>
+                          </tr>
+                            <tr>
+                              <td>自主管理产品规模</td>
+                                <td align="center" id="selfAmount"></td>
+                            </tr>
+                            <tr>
+                              <td>触及预警线产品数量（只）</td>
+                                <td align="center" id="alertNum"></td>
+                            </tr>
+                            <tr>
+                              <td>触及清盘线及清盘产品数量（只）</td>
+                                <td align="center" id="cleanNum"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 自有资金投资</div>
+                    <div style="margin-left: -20px;margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="row" >
+                            <thead>
+                            <tr>
+                                <th width ='13%' style="background-color: #1351a0;"></th>
+                                <th width ='15%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">投资总额</th>
+                                <th width ='15%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">已审批未投资额度</th>
+                                <th width ='15%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">在投产品数量（只）</th>
+                                <th width ='15%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">当日/季盈亏</th>
+                                <th width ='13%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">当年盈亏</th>
+                                <th width ='13%' align="center" style="background-color: #1351a0; color: white; font-weight: bold">累计盈亏</th>
+                            </tr>
+                            </thead>
+                          <tbody>
+                          <tr>
+                              <td width ='13%' style="background-color: #c6ddfc; font-weight: bold">自有资金投资产品</td>
+                              <td width ='15%' align="center" id="productAmt"></td>
+                              <td width ='15%' align="center" id="productAvailableAmount"></td>
+                              <td width ='15%' align="center" id="productNum"></td>
+                              <td width ='15%' align="center" id="dailyPnl"></td>
+                              <td width ='13%' align="center" id="yearPnl"></td>
+                              <td width ='13%' align="center" id="cumPnl"></td>
+                          </tr>
+                            <tr>
+                              <td style="background-color: #c6ddfc; font-weight: bold">自有资金现金管理</td>
+                              <td align="center" id="cashAmt"></td>
+                              <td align="center"> -- </td>
+                              <td align="center" id="cashNum"></td>
+                              <td align="center" id="cashQuartPnl"></td>
+                              <td align="center" id="cashYearPnl"></td>
+                              <td align="center" id="cashCumPnl"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                    <div style="font-size: 8px; margin-left: -15px">
+                        注：1.此处计算口径为已确认份额产品；2.产品净值更新频率多数为日频，少量为周频；3.自有资金投资产品按日更新、现金管理盈亏按季更新
+                    </div>
+                </div>
+            </div>
+{#            德睿风险概况#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河德睿风险概况</legend>
+            </fieldset>
+            <div class="layui-row" >
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="lineBar" style="height:200px;width:400px; margin-right: -20px"></div>
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6">
+                    <div style="font-weight: bold;font-size: larger;">&#9632 流动性指标</div>
+                    <div style="margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="nob" lay-even="">
+                            <thead>
+                            <tr>
+                                <th width ='20%'>指标名</th>
+                                <th width ='80%' align="center">一级流动性储备资产规模/自有资产总额</th>
+                            </tr>
+                            </thead>
+                          <tbody>
+                          <tr>
+                              <td width ='20%'>限额值</td>
+                              <td width ='80%' align="center"> >10%</td>
+
+                          </tr>
+                            <tr>
+                              <td>执行值</td>
+                              <td align="center" id="l1_assetAmt"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <div style="margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="row">
+                            <thead>
+                            <tr>
+                                <th style="width: 11.5%;background-color: #1351a0;"></th>
+                                <th align="center" style="width: 24.5%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">占用资金规模</th>
+                                <th align="center" style="width: 23%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">敞口（cash delta）</th>
+                                <th align="center" style="width: 19%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">VaR（1d, 95%）</th>
+                                <th align="center" style="width: 22%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">当年盈亏</th>
+                            </tr>
+                            </thead>
+                          <tbody>
+                          <tr>
+                              <td style="width: 11.5%;background-color: #c6ddfc;font-weight: bold">德睿整体</td>
+                              <td align="center" style="width: 24.5%; text-align: center;background-color: #c6ddfc;font-weight: bold" id="totalAmt"></td>
+                              <td align="center" style="width: 23%; text-align: center;background-color: #c6ddfc;font-weight: bold" id="totalCashDelta"></td>
+                              <td align="center" style="width: 19%; text-align: center;background-color: #c6ddfc;font-weight: bold" id="totalVar"></td>
+                              <td align="center" style="width: 22%; text-align: center;background-color: #c6ddfc;font-weight: bold" id="totalPnl"></td>
+
+                          </tr>
+                          <tr>
+                              <td style="width: 11.5%">产品投资</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="productInvestAmt"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="productCashDelta"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="productVar"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="productPnl"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 11.5%">自营业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="sigmaAmt"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="sigmaCashDelta"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="sigmaVar"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="sigmaPnl"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 11.5%">期现业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="cAmt"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="cCashDelta"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="cVar"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="cPnl"></td>
+                            </tr>
+                          <tr>
+                              <td style="width: 11.5%">做市业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="ommAmt"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="ommCashDelta"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="ommVar"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="ommPnl"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 11.5%">场外业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="otcAmt"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="otcCashDelta"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="otcVar"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="otcPnl"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+{#            德睿资金使用情况#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河德睿资金使用情况</legend>
+            </fieldset>
+            <div class="layui-row" >
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="line" style="height:300px;width: 400px;margin-right: -50px"></div>
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" id="pie" style="height:300px;"></div>
+            </div>
+{#            德睿授信#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河德睿授信情况</legend>
+            </fieldset>
+            <div class="layui-row" >
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" >
+                    <div id="bar" style="height:350px;width:380px;"></div>
+                    <div style="width:350px;margin-top: -40px!important;">
+                        <table class="layui-table" lay-size="sm" lay-skin="nob" lay-even="">
+
+                          <tbody>
+                          <tr>
+                              <td width ='5%'>限额值</td>
+                              <td width ='8%' align="center">150,000</td>
+                              <td width ='11%' align="center">1,000,000</td>
+                          </tr>
+                            <tr>
+                              <td><span style="color: #c10000;margin-left: -7px">&#9632</span>审批值</td>
+                                <td align="center" id="l1_creditAmt_nonSecBank_usable"></td>
+                                <td align="center" id="l1_creditAmt_secBank_usable"></td>
+                            </tr>
+                            <tr>
+                              <td><span style="color: #022665;margin-left: -7px">&#9632</span>占用值</td>
+                                <td align="center" id="l1_creditAmt_nonSecBank_used"></td>
+                                <td align="center" id="l1_creditAmt_secBank_used"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="layui-col-xs6 layui-col-sm6 layui-col-md6" >
+                    <div id="bar2" style="height:350px;width:480px;margin-left: -40px"></div>
+                    <div style="width:420px;margin-top: -40px;margin-left: -40px!important;">
+                        <table class="layui-table" lay-size="sm" lay-skin="nob" lay-even="">
+
+                          <tbody>
+                          <tr>
+                              <td width ='40%' align="center">75,000</td>
+                              <td width ='30%' align="center">1,000,000</td>
+                                <td width ='25%' align="center">75,000</td>
+                          </tr>
+                            <tr>
+                                <td align="center" id="l2_otc_creditAmt_nonSecBank"></td>
+                                <td align="center" id="l2_otc_creditAmt_secBank"></td>
+                                <td align="center" id="l2_c_creditAmt_usable"></td>
+                            </tr>
+                            <tr>
+                                <td align="center" id="l2_otc_creditAmt_nonSecBank_used"></td>
+                                <td align="center" id="l2_otc_creditAmt_secBank_used"></td>
+                                <td align="center" id="l2_c_creditAmt_used"></td>
+                            </tr>
+
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-row" >
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <p style="font-size: 14px;font-weight: bold;margin-top: 10px;text-align: center">银河德睿特殊授信</p>
+                    <table class="layui-hide" id="specialCreidt"  lay-filter="specialCreidt"></table>
+                    <p style="font-size: 8px;">统计口径：1.不含日内授信；2.期现业务特殊授信高于2500万元；3.场外业务（非券商银行保险以及风险管理子公司）高于200万元</p>
+                </div>
+            </div>
+{#            德睿明细#}
+            <fieldset class="layui-elem-field layui-field-title">
+              <legend style="font-weight: bold;font-size: larger;color: #1351a0"><i class="layui-icon layui-icon-location"></i> 银河德睿业务明细</legend>
+            </fieldset>
+                <div class="layui-col-xs12 layui-col-sm12 layui-col-md12">
+                    <div style="margin-bottom: 10px!important;">
+                        <table class="layui-table" lay-skin="row" >
+                            <thead>
+                            <tr >
+                                <th style="width: 11.5%;background-color: #1351a0;"></th>
+                                <th align="center" style="width: 24.5%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">占用资金规模</th>
+                                <th align="center" style="width: 23%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">敞口（cash delta）</th>
+                                <th align="center" style="width: 19%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">VaR（1d, 95%）</th>
+                                <th align="center" style="width: 22%; text-align: center; background-color: #1351a0; color: white; font-weight: bold">当年盈亏</th>
+                            </tr>
+                            </thead>
+                          <tbody>
+                          <tr>
+                              <td style="width: 11.5%; background-color: #c6ddfc; font-weight: bold">产品投资</td>
+                                <td align="center" style="width: 24.5%; text-align: center; background-color: #c6ddfc;" id="productInvestAmt2"></td>
+                                <td align="center" style="width: 23%; text-align: center; background-color: #c6ddfc;" id="productCashDelta2"></td>
+                                <td align="center" style="width: 19%; text-align: center; background-color: #c6ddfc;" id="productVar2"></td>
+                                <td align="center" style="width: 22%; text-align: center; background-color: #c6ddfc;" id="productPnl2"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 11.5%; background-color: #c6ddfc; font-weight: bold">自营业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center; background-color: #c6ddfc;" id="sigmaAmt2"></td>
+                                <td align="center" style="width: 23%; text-align: center; background-color: #c6ddfc;" id="sigmaCashDelta2"></td>
+                                <td align="center" style="width: 19%; text-align: center; background-color: #c6ddfc;" id="sigmaVar2"></td>
+                                <td align="center" style="width: 22%; text-align: center; background-color: #c6ddfc;" id="sigmaPnl2"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 11.5%; background-color: #c6ddfc; font-weight: bold">期现业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center; background-color: #c6ddfc;" id="cAmt2"></td>
+                                <td align="center" style="width: 23%; text-align: center; background-color: #c6ddfc;" id="cCashDelta2"></td>
+                                <td align="center" style="width: 19%; text-align: center; background-color: #c6ddfc;" id="cVar2"></td>
+                                <td align="center" style="width: 22%; text-align: center; background-color: #c6ddfc;" id="cPnl2"></td>
+                            </tr>
+                            <td style="width: 11.5%;text-align: right;">融资类</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="cAmt_fund"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="cCashDelta_fund"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="cVar_fund"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="cPnl_fund"></td>
+                            </tr>
+                            <td style="width: 11.5%;text-align: right;">基差类</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="cAmt_basic"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="cCashDelta_basic"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="cVar_basic"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="cPnl_basic"></td>
+                            </tr>
+                          <tr>
+                              <td style="width: 11.5%; background-color: #c6ddfc; font-weight: bold">做市业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center; background-color: #c6ddfc;" id="ommAmt2"></td>
+                                <td align="center" style="width: 23%; text-align: center; background-color: #c6ddfc;" id="ommCashDelta2"></td>
+                                <td align="center" style="width: 19%; text-align: center; background-color: #c6ddfc;" id="ommVar2"></td>
+                                <td align="center" style="width: 22%; text-align: center; background-color: #c6ddfc;" id="ommPnl2"></td>
+                            </tr>
+                            <td style="width: 11.5%;text-align: right;">期货</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="ommAmt_fut"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="ommCashDelta_fut"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="ommVar_fut"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="ommPnl_fut"></td>
+                            </tr>
+                            <td style="width: 11.5%;text-align: right;">期权</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="ommAmt_opt"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="ommCashDelta_opt"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="ommVar_opt"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="ommPnl_opt"></td>
+                            </tr>
+                            <td style="width: 11.5%;text-align: right;">预估返还</td>
+                                <td align="center" style="width: 24.5%; text-align: center" ></td>
+                                <td align="center" style="width: 23%; text-align: center" ></td>
+                                <td align="center" style="width: 19%; text-align: center" ></td>
+                                <td align="center" style="width: 22%; text-align: center" id="ommBack"></td>
+                            </tr>
+                            <tr>
+                              <td style="width: 11.5%; background-color: #c6ddfc; font-weight: bold">场外业务</td>
+                                <td align="center" style="width: 24.5%; text-align: center; background-color: #c6ddfc;" id="otcAmt2"></td>
+                                <td align="center" style="width: 23%; text-align: center; background-color: #c6ddfc;" id="otcCashDelta2"></td>
+                                <td align="center" style="width: 19%; text-align: center; background-color: #c6ddfc;" id="otcVar2"></td>
+                                <td align="center" style="width: 22%; text-align: center; background-color: #c6ddfc;" id="otcPnl2"></td>
+                            </tr>
+                          <td style="width: 11.5%;text-align: right">个股</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="otcAmt_fin"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="otcCashDelta_fin"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="otcVar_fin"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="otcPnl_fin"></td>
+                            </tr>
+                          <td style="width: 11.5%;text-align: right">商品</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="otcAmt_comm"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="otcCashDelta_comm"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="otcVar_comm"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="otcPnl_comm"></td>
+                            </tr>
+                          <td style="width: 11.5%;text-align: right">其他</td>
+                                <td align="center" style="width: 24.5%; text-align: center" id="otcAmt_other"></td>
+                                <td align="center" style="width: 23%; text-align: center" id="otcCashDelta_other"></td>
+                                <td align="center" style="width: 19%; text-align: center" id="otcVar_other"></td>
+                                <td align="center" style="width: 22%; text-align: center" id="otcPnl_other"></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                    </div>
+                </div>
+
+{#            页尾#}
+            <hr style="background-color:#c10000;height:2px !important;">
+            <div style="font-weight: bold">
+                &nbsp;&nbsp; 400-886-7799 &nbsp;&nbsp;&nbsp;&nbsp;www.yhqh.com.cn&nbsp;&nbsp;&nbsp;&nbsp;（内部资料，请勿外传）
+            </div>
+        </br>
+      </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+    .layui-table-cell{
+        height: auto;
+    }
+</style>
+<script src="/static/layui/layui.js" charset="utf-8"></script>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+{#菜单#}
+<script>
+layui.use('element', function(){
+  var element = layui.element; //导航的hover效果、二级菜单等功能，需要依赖element模块
+
+  //监听导航点击
+  element.on('nav(demo)', function(elem){
+    //console.log(elem)
+    layer.msg(elem.text());
+  });
+});
+</script>
+
+{#导出pdf#}
+<script src="https://cdn.bootcss.com/jspdf/1.5.3/jspdf.debug.js"></script>
+<script src="https://cdn.bootcss.com/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
+<script>
+    layui.config({
+        base: '/static/',   // 第三方模块所在目录
+    }).extend({
+        FileSaver: 'FileSaver',
+        wordexport: 'wordexport'
+    });
+</script>
+
+<script type="text/javascript">
+    var downPdf = document.getElementById("exportToPdf");
+    downPdf.onclick = function () {
+        html2canvas(
+                document.getElementById("export_content"),
+                {
+                    dpi: 172,//导出pdf清晰度
+                    onrendered: function (canvas) {
+                        var contentWidth = canvas.width;
+                        var contentHeight = canvas.height;
+
+                        //一页pdf显示html页面生成的canvas高度;
+                        var pageHeight = contentWidth / 592.28 * 841.89;
+                        //未生成pdf的html页面高度
+                        var leftHeight = contentHeight;
+                        //pdf页面偏移
+                        var position = 0;
+                        //html页面生成的canvas在pdf中图片的宽高（a4纸的尺寸[595.28,841.89]）
+                        var imgWidth = 595.28;
+                        var imgHeight = 592.28 / contentWidth * contentHeight;
+
+                        var pageData = canvas.toDataURL('image/jpeg', 1.0);
+                        var pdf = new jsPDF('', 'pt', 'a4');
+
+                        //有两个高度需要区分，一个是html页面的实际高度，和生成pdf的页面高度(841.89)
+                        //当内容未超过pdf一页显示的范围，无需分页
+                        if (leftHeight < pageHeight) {
+                            pdf.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                        } else {
+                            while (leftHeight > 0) {
+                                pdf.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight)
+                                leftHeight -= pageHeight;
+                                position -= 841.89;
+                                //避免添加空白页
+                                if (leftHeight > 0) {
+                                    pdf.addPage();
+                                }
+                            }
+                        }
+                        pdf.save('content.pdf');
+                    },
+                    //背景设为白色（默认为黑色）
+                    background: "#fff"
+                })
+    }
+</script>
+<script type="text/javascript">
+    var downPdf = document.getElementById("exportToWord");
+    downPdf.onclick = function () {
+        $("export_content").wordExport("日报");
+    }
+
+</script>
+
+{#上传文件数据#}
+<script>
+layui.use([ 'jquery'], function () {
+
+    var $ = layui.jquery;
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+    })
+})
+</script>
+<script>
+layui.use('upload', function(){
+  var $ = layui.jquery
+  ,upload = layui.upload;
+
+  upload.render({
+    elem: '#uploadFinanceData'
+    ,url: '../postFinanceData' //改成您自己的上传接口
+    ,accept: 'file' //普通文件
+    ,done: function(res){
+      layer.msg('上传成功');
+      console.log(res);
+    }
+  });
+
+  upload.render({
+    elem: '#uploadRiskDailyData'
+    ,url: '../postRiskDailyData' //改成您自己的上传接口
+    ,accept: 'file' //普通文件
+    ,done: function(res){
+      layer.msg('上传成功');
+      console.log(res);
+    }
+  });
+  upload.render({
+    elem: '#uploadDeruiLimitData'
+    ,url: '../postDeruiLimitData' //改成您自己的上传接口
+    ,accept: 'file' //普通文件
+    ,done: function(res){
+      layer.msg('上传成功');
+      console.log(res);
+    }
+  });
+
+    upload.render({
+    elem: '#uploadDeruiSectorData'
+    ,url: '../postDeruiSectorData' //改成您自己的上传接口
+    ,accept: 'file' //普通文件
+    ,done: function(res){
+      layer.msg('上传成功');
+      console.log(res);
+    }
+  });
+});
+
+
+
+</script>
+{#对应数据#}
+<script>
+    layui.use(['form', 'table', 'laydate','FileSaver','wordexport'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+        var laydate = layui.laydate;
+            FileSaver = layui.FileSaver,
+            wordexport = layui.wordexport
+        //执行一个laydate实例
+        laydate.render({
+            elem: '#searchDate' //指定元素
+        });
+        laydate.render({
+            elem: '#dataDate' //指定元素
+        });
+    {#柱状图 授信情况L1    #}
+    var bar = echarts.init(document.getElementById('bar'));
+    var usable = [2.0, 2.2]
+    var used = [2.0, 2.2]
+    var barOption = {
+            title: {
+                text: "银河德睿授信情况（L1）",
+                left: "center",
+                top: "top",
+                textStyle: {
+                  fontSize: 14,
+                  fontWeight: "bold",
+                },
+            },
+        grid:{
+            x:55,
+
+        },
+            xAxis: {
+                type: 'category',
+                data: ['非券商银行类客户', '券商银行类客户']
+            },
+            yAxis: {
+                type: 'value',
+            },
+            series: [
+            {
+                name: '审批值',
+                type: 'bar',
+                data: usable,
+                barWidth: 30,
+            },
+                {
+                name: '占用值',
+                type: 'bar',
+                data: used,
+                    color:'#1351a0',
+                    barWidth: 30,
+                }
+            ]
+        };
+
+
+    var bar2 = echarts.init(document.getElementById('bar2'));
+    var usable2 = [2.0, 2.2,2.4]
+    var used2 = [2.0, 2.2,2.4]
+    var bar2Option = {
+        title: {
+            text: "银河德睿授信情况（L2）",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        grid:{
+            x:55,
+
+        },
+        xAxis: {
+            type: 'category',
+            data: ['场外非券商银行类', '场外券商银行类','期现']
+        },
+        yAxis: {
+            type: 'value',
+        },
+        series: [
+        {
+            name: '审批值',
+            type: 'bar',
+            data: usable2,
+             barWidth: 30
+        },
+            {
+            name: '占用值',
+            type: 'bar',
+            data: used2,
+                 barWidth: 30,
+                color:'#1351a0',
+        }
+    ]
+    };
+
+    {#    lineBar#}
+    var lineBar = echarts.init(document.getElementById('lineBar'));
+    var date = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+    var exposure = [2.0, 4.9, 7.0, 23.2, 25.6, 76.7, 135.6, 162.2, 32.6, 20.0, 6.4, 3.3]
+    var pnl = [2.0, 2.2, 3.3, 4.5, 6.3, 10.2, 20.3, 23.4, 23.0, 16.5, 12.0, 6.2]
+    var lineBarOption = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross',
+                crossStyle: {
+                    color: '#999'
+                }
+            }
+        },
+            grid:{
+                x: 58,
+                y: 25
+            },
+        legend: {
+            data: ['整体敞口', '整体盈亏']
+        },
+        xAxis: [
+            {
+                type: 'category',
+                data: date,
+                axisPointer: {
+                    type: 'shadow'
+                },
+                axisLabel: {
+                   rotate:40,
+                  fontSize: 10
+                }
+            }
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                axisLabel: {
+                    formatter: '{value}'
+                }
+            },
+            {
+                type: 'value',
+                name: '盈亏',
+                axisLabel: {
+                    formatter: '{value}'
+                },
+                show:false
+            }
+        ],
+        series: [
+            {
+                name: '整体敞口',
+                type: 'bar',
+                data: exposure
+            },
+            {
+                name: '整体盈亏',
+                type: 'line',
+                yAxisIndex: 1,
+                data: pnl
+            }
+        ]
+    };
+
+    {#    line#}
+    var line = echarts.init(document.getElementById('line'));
+    var lineOption = {
+        title: {
+            text: "合计占用资金规模",
+            left: "center",
+            top: "top",
+            textStyle: {
+              fontSize: 14,
+              fontWeight: "bold",
+            },
+        },
+        grid: {
+            x: 55,
+        },
+        tooltip: {
+            trigger: 'axis'
+        },
+        xAxis: {
+            type: 'category',
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+        {
+            name: '合计占用资金规模',
+            type: 'line',
+            data: [1,2,3],
+        }
+        ]
+    };
+
+    {#      pie#}
+    var pie = echarts.init(document.getElementById('pie'));
+    var pieData = [
+                {value: 150044.72, name: '期现业务'},
+                {value: 48447.31, name: '产品投资'},
+                {value: 48447.31, name: '自营业务'},
+                {value: 99936.83, name: '做市业务'},
+                {value: 33350.85, name: '场外业务'},
+            ]
+    var pieOption = {
+    title: {
+        text: "银河德睿各项业务占用资金规模",
+        left: "center",
+        top: "top",
+        textStyle: {
+          fontSize: 14,
+          fontWeight: "bold",
+        },
+    },
+    tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    series: [
+        {
+            name: '占用资金规模',
+            type: 'pie',
+            radius: ['15%', '55%'],
+            avoidLabelOverlap: true,
+            label: {
+                show: true,
+                formatter: '{b}\n{c} ',
+            },
+            labelLine: {
+                  length: 15,
+                  length2: 10,
+                },
+
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            },
+
+            data: pieData,
+        }
+    ]
+};
+
+    {#    三个仪表盘#}
+    var gauge1 = echarts.init(document.getElementById('gauge1'));
+    var option1Data = [{value: 0, name: '净资本'}]
+    var option1 = {
+    tooltip: {
+        formatter: '{a} <br/>{b} : {c}%'
+    },
+    series: [
+        {
+            name: '业务指标',
+            type: 'gauge',
+            min: 0,
+            max: 150000,
+            startAngle: 180,
+            endAngle: 0,
+            splitNumber: 5,
+            axisLine: {            // 坐标轴线
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    width: 8,
+                    color: [[0.02, '#c23531'], [0.025, '#f5ee1c'], [1, '#1351a0']]
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                length: 10,        // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: 'auto'
+                }
+            },
+            splitLine: {           // 分隔线
+                length: 15,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: 'auto'
+                }
+            },
+            pointer: {
+                width: 5
+            },
+            title: {
+                offsetCenter: [0, '-120%'],// x, y，单位px
+                fontWeight: 'bolder',
+                fontSize:15
+            },
+            detail: {
+                fontWeight: 'bolder',
+                formatter: '{value}万元',
+                offsetCenter:["0","20%"],
+                fontSize:15},
+            data: option1Data,
+        }
+    ]
+};
+
+    var gauge2 = echarts.init(document.getElementById('gauge2'));
+    var option2Data = [{value: 0, name: '净资本/净资产'}]
+    var option2 = {
+    tooltip: {
+        formatter: '{a} <br/>{b} : {c}%'
+    },
+    series: [
+        {
+            name: '业务指标',
+            type: 'gauge',
+            min: 0,
+            max: 100,
+            startAngle: 180,
+            endAngle: 0,
+            splitNumber: 5,
+
+            axisLine: {            // 坐标轴线
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    width: 8,
+                    color: [[0.2, '#c23531'], [0.25, '#f5ee1c'], [1, '#1351a0']]
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                length: 10,        // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: 'auto'
+                }
+            },
+            splitLine: {           // 分隔线
+                length: 15,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: 'auto'
+                }
+            },
+            pointer: {
+                width: 5
+            },
+            title: {
+                offsetCenter: [0, '-120%'],// x, y，单位px
+                fontWeight: 'bolder',
+                fontSize:15
+            },
+            detail: {
+                fontWeight: 'bolder',
+                formatter: '{value}%',
+                offsetCenter:["0","20%"],
+                fontSize:15},
+            data: option2Data,
+        }
+    ]
+};
+
+    var gauge3 = echarts.init(document.getElementById('gauge3'));
+    var option3Data = [{value: 0, name: '风险覆盖率'}]
+    var option3 = {
+    tooltip: {
+        formatter: '{a} <br/>{b} : {c}%'
+    },
+    series: [
+        {
+            name: '业务指标',
+            type: 'gauge',
+            min: 0,
+            max: 500,
+            startAngle: 180,
+            endAngle: 0,
+            splitNumber: 5,
+            axisLine: {            // 坐标轴线
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    width: 8,
+                    color: [[0.2, '#c23531'], [0.24, '#f5ee1c'], [1, '#1351a0']]
+                }
+            },
+            axisTick: {            // 坐标轴小标记
+                length: 10,        // 属性length控制线长
+                lineStyle: {       // 属性lineStyle控制线条样式
+                    color: 'auto'
+                }
+            },
+            splitLine: {           // 分隔线
+                length: 15,         // 属性length控制线长
+                lineStyle: {       // 属性lineStyle（详见lineStyle）控制线条样式
+                    color: 'auto'
+                }
+            },
+            pointer: {
+                width: 5
+            },
+            title: {
+                offsetCenter: [0, '-120%'],// x, y，单位px
+                fontWeight: 'bolder',
+                fontSize:15
+            },
+            detail: {
+                fontWeight: 'bolder',
+                formatter: '{value}%',
+                offsetCenter:["0","20%"],
+                fontSize:15},
+            data: option3Data
+        }
+    ]
+};
+
+
+{#表格#}
+    var tableIns = table.render({
+        elem: '#specialCreidt'
+        , url: '/fxglb/getSpecialCreidtInfo'
+        , title: '特殊授信表'
+        , parseData: function (res) { //res 即为原始返回的数据
+            console.log(res.data.specialCreditData)
+            specialCreditData = res.data.specialCreditData;
+            return {
+                "code": 0, //解析接口状态
+                "msg": "", //解析提示文本
+                "count": res.data.total, //解析数据长度
+                "data": res.data.specialCreditData //解析数据列表
+            };
+        }
+        , cols: [[
+              {field:"sector", title: '业务类别', align: 'center', width: '20%', }
+             ,{field:"name", title: '&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;客户名称&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;', align: 'center',width: '45.5%',}
+             ,{field:"amt", title: '额度&#8197;', align: 'center',width: '15%', }
+             ,{field:"deadline", title: '&emsp;有效期&emsp;', align: 'center',width: '20%', }
+        ]]
+    });
+
+    // 监听搜索操作
+    form.on('submit(searchBtn)', function (data) {
+        $.ajax({
+            url: "/fxglb/getDailyData?date="+data.field.searchDate,
+            success: function (res) {
+                console.log(res)
+                if(res.code==2000){
+                    let data = res.data
+                    barOption.series[0].data = [data[0].l1_creditAmt_nonSecBank_usable,data[0].l1_creditAmt_secBank_usable];
+                    barOption.series[1].data = [data[0].l1_creditAmt_nonSecBank_used,data[0].l1_creditAmt_secBank_used];
+                    bar.setOption(barOption);
+
+                    bar2Option.series[0].data = [data[0].l2_otc_creditAmt_nonSecBank,data[0].l2_otc_creditAmt_secBank,data[0].l2_c_creditAmt_usable];
+                    bar2Option.series[1].data = [data[0].l1_creditAmt_nonSecBank_used - data[0].l2_c_creditAmt_used,data[0].l1_creditAmt_secBank_used,data[0].l2_c_creditAmt_used];
+                    bar2.setOption(bar2Option);
+
+                    pieOption.series[0].data = [
+                                                    {value: data[0].cAmt, name: '期现业务'},
+                                                    {value: data[0].sigmaAmt_pro, name: '产品投资'},
+                                                    {value: data[0].sigmaAmt_vol, name: '自营业务'},
+                                                    {value: data[0].ommAmt, name: '做市业务'},
+                                                    {value: data[0].otcAmt, name: '场外业务'},
+                                                ];
+                    pie.setOption(pieOption);
+
+
+                    option1.series[0].data = [{value: data[0].netEquity, name: '净资本'}];
+                    gauge1.setOption(option1);
+
+                    option2.series[0].data = [{value: data[0].netEAratio, name: '净资本/净资产'}];
+                    gauge2.setOption(option2);
+
+                    option3.series[0].data = [{value: data[0].coverRatio, name: '风险覆盖率'}];
+                    gauge3.setOption(option3);
+
+                    document.getElementById("date").innerText=data[0].date;
+                    document.getElementById("reportDate").innerText=data[0].reportDate;
+                    document.getElementById("num").innerText=data[0].year + '年第'+data[0].yearNum+'期  总第'+data[0].totalNum+'期';
+
+                    document.getElementById("closePos").innerText=data[0].closePos;
+                    document.getElementById("overLoss").innerText=data[0].overLoss;
+                    document.getElementById("yearOverLoss").innerText=data[0].yearOverLoss;
+                    document.getElementById("overRisk").innerText=data[0].overRisk;
+
+                    document.getElementById("importantText").innerText=data[0].importantText;
+                    document.getElementById("limitText").innerText=data[0].limitText;
+
+                    document.getElementById("totalAmount").innerText=data[0].totalAmount;
+                    document.getElementById("selfAmount").innerText=data[0].selfAmount;
+                    document.getElementById("alertNum").innerText=data[0].alertNum;
+                    document.getElementById("cleanNum").innerText=data[0].cleanNum;
+
+                    document.getElementById("productAmt").innerText=data[0].productAmt;
+                    document.getElementById("productAvailableAmount").innerText=data[0].productAvailableAmount;
+                    document.getElementById("productNum").innerText=data[0].productNum;
+                    if (data[0].dailyPnl > 0){
+                        document.getElementById("dailyPnl").innerHTML= '<span style="color: #c10000">'+data[0].dailyPnl+'</span>';
+                    }else if(data[0].dailyPnl<0){
+                        document.getElementById("dailyPnl").innerHTML= '<span style="color: #07a807">'+data[0].dailyPnl+'</span>';
+                    }else if(data[0].dailyPnl == 0){
+                        document.getElementById("dailyPnl").innerHTML= '<span>'+data[0].dailyPnl+'</span>';
+                    }
+                    document.getElementById("yearPnl").innerText=data[0].yearPnl;
+                    document.getElementById("cumPnl").innerText=data[0].cumPnl;
+
+                    document.getElementById("cashAmt").innerText=data[0].cashAmt;
+                    document.getElementById("cashNum").innerText=data[0].cashNum;
+                    document.getElementById("cashQuartPnl").innerText=data[0].cashQuartPnl;
+                    document.getElementById("cashYearPnl").innerText=data[0].cashYearPnl;
+                    document.getElementById("cashCumPnl").innerText=data[0].cashCumPnl;
+
+                    document.getElementById("l1_assetAmt").innerText=data[0].l1_assetAmt+'%';
+                    document.getElementById("l1_creditAmt_nonSecBank_usable").innerText=data[0].l1_creditAmt_nonSecBank_usable;
+                    document.getElementById("l1_creditAmt_nonSecBank_used").innerText=data[0].l1_creditAmt_nonSecBank_used;
+                    document.getElementById("l1_creditAmt_secBank_usable").innerText=data[0].l1_creditAmt_secBank_usable;
+                    document.getElementById("l1_creditAmt_secBank_used").innerText=data[0].l1_creditAmt_secBank_used;
+                    document.getElementById("l2_otc_creditAmt_nonSecBank").innerText=data[0].l2_otc_creditAmt_nonSecBank;
+                    document.getElementById("l2_otc_creditAmt_secBank").innerText=data[0].l2_otc_creditAmt_secBank;
+                    document.getElementById("l2_otc_creditAmt_nonSecBank_used").innerText=(data[0].l1_creditAmt_nonSecBank_used - data[0].l2_c_creditAmt_used).toFixed(2);
+                    document.getElementById("l2_otc_creditAmt_secBank_used").innerText=data[0].l1_creditAmt_secBank_used;
+                    document.getElementById("l2_c_creditAmt_usable").innerText=data[0].l2_c_creditAmt_usable;
+                    document.getElementById("l2_c_creditAmt_used").innerText=data[0].l2_c_creditAmt_used;
+
+                    if (data[0].totalAmtChange > 0){
+                        document.getElementById("totalAmt").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].totalAmt + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">' + data[0].totalAmtChange +'</span></div>';
+                    }else if(data[0].totalAmtChange<0){
+                        document.getElementById("totalAmt").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].totalAmt + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].totalAmtChange) +'</span></div>';
+                    }else if(data[0].totalAmtChange == 0){
+                        document.getElementById("totalAmt").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].totalAmt + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].totalAmtChange +'</span></div>';
+                    }
+                    if (data[0].totalCashDeltaChange > 0){
+                        document.getElementById("totalCashDelta").innerHTML= '<div style="text-align: left"><span style="float:left; width: 45%">'+ data[0].totalCashDelta + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">' + data[0].totalCashDeltaChange+'</span></div>';
+                    }else if(data[0].totalCashDeltaChange < 0){
+                        document.getElementById("totalCashDelta").innerHTML= '<div style="text-align: left"><span style="float:left; width: 45%">'+ data[0].totalCashDelta + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].totalCashDeltaChange) +'</span></div>';
+                    }else if(data[0].totalCashDeltaChange == 0){
+                        document.getElementById("totalCashDelta").innerHTML= '<div style="text-align: left"><span style="float:left; width: 45%">'+ data[0].totalCashDelta + '</span><span>&thinsp;&#8211</span><span style="float:right;margin-left: -30%">'+ data[0].totalCashDeltaChange +'</span></div>';
+                    }
+                    if (data[0].totalVarChange > 0){
+                        document.getElementById("totalVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].totalVar + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].totalVarChange +'</span></div>';
+                    }else if(data[0].totalVarChange < 0){
+                        document.getElementById("totalVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].totalVar + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].totalVarChange) +'</span></div>';
+                    }else if(data[0].totalVarChange == 0){
+                        document.getElementById("totalVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].totalVar + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].totalVarChange +'</span></div>';
+                    }
+                    if (data[0].totalPnlChange > 0){
+                        document.getElementById("totalPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].totalPnl + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].totalPnlChange +'</span></div>';
+                    }else if(data[0].totalPnlChange < 0){
+                        document.getElementById("totalPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].totalPnl + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].totalPnlChange) +'</span></div>';
+                    }else if(data[0].totalPnlChange == 0){
+                        document.getElementById("totalPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].totalPnl + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].totalPnlChange +'</span></div>';
+                    }
+
+                    if (data[0].otcAmtChange > 0){
+                        document.getElementById("otcAmt").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].otcAmt + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcAmtChange +'</span></div>';
+                        document.getElementById("otcAmt2").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].otcAmt + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcAmtChange +'</span></div>';
+                    }else if(data[0].otcAmtChange < 0){
+                        document.getElementById("otcAmt").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].otcAmt + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcAmtChange) +'</span></div>';
+                        document.getElementById("otcAmt2").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].otcAmt + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcAmtChange) +'</span></div>';
+                    }else if(data[0].otcAmtChange == 0){
+                        document.getElementById("otcAmt").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].otcAmt + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+data[0].otcAmtChange +'</span></div>';
+                        document.getElementById("otcAmt2").innerHTML= '<div style="text-align: left"><span style="float:left; width: 50%">'+ data[0].otcAmt + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+data[0].otcAmtChange +'</span></div>';
+                    }
+                    if (data[0].otcCashDeltaChange > 0){
+                        document.getElementById("otcCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcCashDeltaChange +'</span></div>';
+                        document.getElementById("otcCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcCashDeltaChange +'</span></div>';
+                    }else if(data[0].otcCashDeltaChange < 0){
+                        document.getElementById("otcCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcCashDeltaChange) +'</span></div>';
+                        document.getElementById("otcCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcCashDeltaChange) +'</span></div>';
+                    }else if(data[0].otcCashDeltaChange == 0){
+                        document.getElementById("otcCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcCashDeltaChange +'</span></div>';
+                        document.getElementById("otcCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcCashDeltaChange +'</span></div>';
+                    }
+                    if (data[0].otcVarChange > 0){
+                        document.getElementById("otcVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcVarChange +'</span></div>';
+                        document.getElementById("otcVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcVarChange +'</span></div>';
+                    }else if(data[0].otcVarChange < 0){
+                        document.getElementById("otcVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcVarChange) +'</span></div>';
+                        document.getElementById("otcVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcVarChange) +'</span></div>';
+                    }else if(data[0].otcVarChange == 0){
+                        document.getElementById("otcVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcVarChange +'</span></div>';
+                        document.getElementById("otcVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcVarChange +'</span></div>';
+                    }
+                    if (data[0].otcPnlChange > 0){
+                        document.getElementById("otcPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcPnlChange +'</span></div>';
+                        document.getElementById("otcPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcPnlChange +'</span></div>';
+                    }else if(data[0].otcPnlChange < 0){
+                        document.getElementById("otcPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcPnlChange) +'</span></div>';
+                        document.getElementById("otcPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcPnlChange) +'</span></div>';
+                    }else if(data[0].otcPnlChange == 0){
+                        document.getElementById("otcPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcPnlChange +'</span></div>';
+                        document.getElementById("otcPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcPnlChange +'</span></div>';
+                    }
+
+                    if (data[0].ommAmtChange > 0){
+                        document.getElementById("ommAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommAmtChange +'</span></div>';
+                        document.getElementById("ommAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommAmtChange +'</span></div>';
+                    }else if(data[0].ommAmtChange < 0){
+                        document.getElementById("ommAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ Math.abs(data[0].ommAmtChange) +'</span></div>';
+                        document.getElementById("ommAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ Math.abs(data[0].ommAmtChange) +'</span></div>';
+                    }else if(data[0].ommAmtChange == 0){
+                        document.getElementById("ommAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommAmtChange +'</span></div>';
+                        document.getElementById("ommAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommAmtChange +'</span></div>';
+                    }
+                    if (data[0].ommCashDeltaChange > 0){
+                        document.getElementById("ommCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommCashDeltaChange +'</span></div>';
+                        document.getElementById("ommCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommCashDeltaChange +'</span></div>';
+                    }else if(data[0].ommCashDeltaChange < 0){
+                        document.getElementById("ommCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommCashDeltaChange) +'</span></div>';
+                        document.getElementById("ommCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommCashDeltaChange) +'</span></div>';
+                    }else if(data[0].ommCashDeltaChange == 0){
+                        document.getElementById("ommCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommCashDeltaChange +'</span></div>';
+                        document.getElementById("ommCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommCashDeltaChange +'</span></div>';
+                    }
+                    if (data[0].ommVarChange > 0){
+                        document.getElementById("ommVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommVarChange +'</span></div>';
+                        document.getElementById("ommVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommVarChange +'</span></div>';
+                    }else if(data[0].ommVarChange < 0){
+                        document.getElementById("ommVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommVarChange) +'</span></div>';
+                        document.getElementById("ommVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommVarChange) +'</span></div>';
+                    }else if(data[0].ommVarChange == 0){
+                        document.getElementById("ommVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommVarChange +'</span></div>';
+                        document.getElementById("ommVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommVarChange +'</span></div>';
+                    }
+                    if (data[0].ommPnlChange > 0){
+                        document.getElementById("ommPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommPnlChange +'</span></div>';
+                        document.getElementById("ommPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl + '</span>' + '<span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommPnlChange +'</span></div>';
+                    }else if(data[0].ommPnlChange < 0){
+                        document.getElementById("ommPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommPnlChange) +'</span></div>';
+                        document.getElementById("ommPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl + '</span>' + '<span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommPnlChange) +'</span></div>';
+                    }else if(data[0].ommPnlChange == 0){
+                        document.getElementById("ommPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommPnlChange +'</span></div>';
+                        document.getElementById("ommPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl + '</span>' + '<span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommPnlChange +'</span></div>';
+                    }
+
+                    if (data[0].sigmaAmt_pro_Change > 0){
+                        document.getElementById("productInvestAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaAmt_pro_Change +'</span></div>';
+                        document.getElementById("productInvestAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaAmt_pro_Change +'</span></div>';
+                    }else if(data[0].sigmaAmt_pro_Change < 0){
+                        document.getElementById("productInvestAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaAmt_pro_Change) +'</span></div>';
+                        document.getElementById("productInvestAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaAmt_pro_Change) +'</span></div>';
+                    }else if(data[0].sigmaAmt_pro_Change == 0){
+                        document.getElementById("productInvestAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaAmt_pro_Change +'</span></span>';
+                        document.getElementById("productInvestAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaAmt_pro_Change +'</span></span>';
+                    }
+                    if (data[0].sigmaCashDelta_pro_Change > 0){
+                        document.getElementById("productCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaCashDelta_pro_Change +'</span></div>';
+                        document.getElementById("productCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaCashDelta_pro_Change +'</span></div>';
+                    }else if(data[0].sigmaCashDelta_pro_Change < 0){
+                        document.getElementById("productCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaCashDelta_pro_Change) +'</span></div>';
+                        document.getElementById("productCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaCashDelta_pro_Change) +'</span></div>';
+                    }else if(data[0].sigmaCashDelta_pro_Change == 0){
+                        document.getElementById("productCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaCashDelta_pro_Change +'</span></div>';
+                        document.getElementById("productCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaCashDelta_pro_Change +'</span></div>';
+                    }
+                    if (data[0].sigmaVar_pro_Change > 0){
+                        document.getElementById("productVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaVar_pro_Change +'</span></div>';
+                        document.getElementById("productVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaVar_pro_Change +'</span></div>';
+                    }else if(data[0].sigmaVar_pro_Change < 0){
+                        document.getElementById("productVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaVar_pro_Change) +'</span></div>';
+                        document.getElementById("productVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaVar_pro_Change) +'</span></div>';
+                    }else if(data[0].sigmaVar_pro_Change == 0){
+                        document.getElementById("productVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaVar_pro_Change +'</span></div>';
+                        document.getElementById("productVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaVar_pro_Change +'</span></div>';
+                    }
+                    if (data[0].sigmaPnl_pro_Change > 0){
+                        document.getElementById("productPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaPnl_pro_Change +'</span></div>';
+                        document.getElementById("productPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_pro + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaPnl_pro_Change +'</span></div>';
+                    }else if(data[0].sigmaPnl_pro_Change < 0){
+                        document.getElementById("productPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaPnl_pro_Change) +'</span></div>';
+                        document.getElementById("productPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_pro + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaPnl_pro_Change) +'</span></div>';
+                    }else if(data[0].sigmaPnl_pro_Change == 0){
+                        document.getElementById("productPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaPnl_pro_Change +'</span></div>';
+                        document.getElementById("productPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_pro + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaPnl_pro_Change +'</span></div>';
+                    }
+
+                    if (data[0].sigmaAmt_vol_Change > 0){
+                        document.getElementById("sigmaAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaAmt_vol_Change +'</span></div>';
+                        document.getElementById("sigmaAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaAmt_vol_Change +'</span></div>';
+                    }else if(data[0].sigmaAmt_vol_Change < 0){
+                        document.getElementById("sigmaAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaAmt_vol_Change) +'</span></div>';
+                        document.getElementById("sigmaAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaAmt_vol_Change) +'</span></div>';
+                    }else if(data[0].sigmaAmt_vol_Change == 0){
+                        document.getElementById("sigmaAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaAmt_vol_Change +'</span></span>';
+                        document.getElementById("sigmaAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaAmt_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaAmt_vol_Change +'</span></span>';
+                    }
+                    if (data[0].sigmaCashDelta_vol_Change > 0){
+                        document.getElementById("sigmaCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaCashDelta_vol_Change +'</span></div>';
+                        document.getElementById("sigmaCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaCashDelta_vol_Change +'</span></div>';
+                    }else if(data[0].sigmaCashDelta_vol_Change < 0){
+                        document.getElementById("sigmaCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaCashDelta_vol_Change) +'</span></div>';
+                        document.getElementById("sigmaCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaCashDelta_vol_Change) +'</span></div>';
+                    }else if(data[0].sigmaCashDelta_vol_Change == 0){
+                        document.getElementById("sigmaCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaCashDelta_vol_Change +'</span></div>';
+                        document.getElementById("sigmaCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaCashDelta_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaCashDelta_vol_Change +'</span></div>';
+                    }
+                    if (data[0].sigmaVar_vol_Change > 0){
+                        document.getElementById("sigmaVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaVar_vol_Change +'</span></div>';
+                        document.getElementById("sigmaVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaVar_vol_Change +'</span></div>';
+                    }else if(data[0].sigmaVar_vol_Change < 0){
+                        document.getElementById("sigmaVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaVar_vol_Change) +'</span></div>';
+                        document.getElementById("sigmaVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaVar_vol_Change) +'</span></div>';
+                    }else if(data[0].sigmaVar_vol_Change == 0){
+                        document.getElementById("sigmaVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaVar_vol_Change +'</span></div>';
+                        document.getElementById("sigmaVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].sigmaVar_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaVar_vol_Change +'</span></div>';
+                    }
+                    if (data[0].sigmaPnl_vol_Change > 0){
+                        document.getElementById("sigmaPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaPnl_vol_Change +'</span></div>';
+                        document.getElementById("sigmaPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_vol + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].sigmaPnl_vol_Change +'</span></div>';
+                    }else if(data[0].sigmaPnl_vol_Change < 0){
+                        document.getElementById("sigmaPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaPnl_vol_Change) +'</span></div>';
+                        document.getElementById("sigmaPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_vol + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].sigmaPnl_vol_Change) +'</span></div>';
+                    }else if(data[0].sigmaPnl_vol_Change == 0){
+                        document.getElementById("sigmaPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaPnl_vol_Change +'</span></div>';
+                        document.getElementById("sigmaPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].sigmaPnl_vol + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].sigmaPnl_vol_Change +'</span></div>';
+                    }
+
+                    if (data[0].cAmtChange > 0){
+                        document.getElementById("cAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cAmtChange +'</span></div>';
+                        document.getElementById("cAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cAmtChange +'</span></div>';
+                    }else if(data[0].cAmtChange < 0){
+                        document.getElementById("cAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cAmtChange) +'</span></div>';
+                        document.getElementById("cAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cAmtChange) +'</span></div>';
+                    }else if(data[0].cAmtChange == 0){
+                        document.getElementById("cAmt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cAmtChange + '</span></div>';
+                        document.getElementById("cAmt2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cAmtChange + '</span></div>';
+                    }
+                    if (data[0].cCashDeltaChange > 0){
+                        document.getElementById("cCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cCashDeltaChange +'</span></div>';
+                        document.getElementById("cCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta + '</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cCashDeltaChange +'</span></div>';
+                    }else if(data[0].cCashDeltaChange < 0){
+                        document.getElementById("cCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cCashDeltaChange) +'</span></div>';
+                        document.getElementById("cCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta + '</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cCashDeltaChange) +'</span></div>';
+                    }else if(data[0].cCashDeltaChange == 0){
+                        document.getElementById("cCashDelta").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cCashDeltaChange +'</span></div>';
+                        document.getElementById("cCashDelta2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta + '</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cCashDeltaChange +'</span></div>';
+                    }
+                    if (data[0].cVarChange > 0){
+                        document.getElementById("cVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cVarChange +'</span></div>';
+                        document.getElementById("cVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cVarChange +'</span></div>';
+                    }else if(data[0].cVarChange < 0){
+                        document.getElementById("cVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cVarChange) +'</span></div>';
+                        document.getElementById("cVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cVarChange) +'</span></div>';
+                    }else if(data[0].cVarChange == 0){
+                        document.getElementById("cVar").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cVarChange +'</span></div>';
+                        document.getElementById("cVar2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cVarChange +'</span></div>';
+                    }
+                    if (data[0].cPnlChange > 0){
+                        document.getElementById("cPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cPnlChange +'</span></div>';
+                        document.getElementById("cPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cPnlChange +'</span></div>';
+                    }else if(data[0].cPnlChange < 0){
+                        document.getElementById("cPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cPnlChange) +'</span></div>';
+                        document.getElementById("cPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cPnlChange) +'</span></div>';
+                    }else if(data[0].cPnlChange == 0){
+                        document.getElementById("cPnl").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cPnlChange +'</span></div>';
+                        document.getElementById("cPnl2").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cPnlChange +'</span></div>';
+                    }
+
+
+
+                    if (data[0].otcAmt_fin_Change > 0){
+                        document.getElementById("otcAmt_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_fin +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcAmt_fin_Change +'</span></div>';
+                    }else if(data[0].otcAmt_fin_Change < 0){
+                        document.getElementById("otcAmt_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_fin +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcAmt_fin_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcAmt_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_fin +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcAmt_fin_Change +'</span></div>';
+                    }
+                    if (data[0].otcCashDelta_fin_Change > 0){
+                        document.getElementById("otcCashDelta_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_fin +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcCashDelta_fin_Change +'</span></div>';
+                    }else if(data[0].otcCashDelta_fin_Change < 0){
+                        document.getElementById("otcCashDelta_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_fin +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcCashDelta_fin_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcCashDelta_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_fin +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcCashDelta_fin_Change +'</span></div>';
+                    }
+                    if (data[0].otcVar_fin_Change > 0){
+                        document.getElementById("otcVar_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_fin +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcVar_fin_Change +'</span></div>';
+                    }else if(data[0].otcVar_fin_Change < 0){
+                        document.getElementById("otcVar_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_fin +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcVar_fin_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcVar_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_fin +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcVar_fin_Change +'</span></div>';
+                    }
+                    if (data[0].otcPnl_fin_Change > 0){
+                        document.getElementById("otcPnl_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_fin +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcPnl_fin_Change +'</span></div>';
+                    }else if(data[0].otcPnl_fin_Change < 0){
+                        document.getElementById("otcPnl_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_fin +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcPnl_fin_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcPnl_fin").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_fin +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcPnl_fin_Change +'</span></div>';
+                    }
+
+                    if (data[0].otcAmt_comm_Change > 0){
+                        document.getElementById("otcAmt_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_comm +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcAmt_comm_Change +'</span></div>';
+                    }else if(data[0].otcAmt_comm_Change < 0){
+                        document.getElementById("otcAmt_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_comm +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcAmt_comm_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcAmt_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_comm +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcAmt_comm_Change +'</span></div>';
+                    }
+                    if (data[0].otcCashDelta_comm_Change > 0){
+                        document.getElementById("otcCashDelta_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_comm +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcCashDelta_comm_Change +'</span></div>';
+                    }else if(data[0].otcCashDelta_comm_Change < 0){
+                        document.getElementById("otcCashDelta_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_comm +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcCashDelta_comm_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcCashDelta_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_comm +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcCashDelta_comm_Change +'</span></div>';
+                    }
+                    if (data[0].otcVar_comm_Change > 0){
+                        document.getElementById("otcVar_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_comm +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcVar_comm_Change +'</span></div>';
+                    }else if(data[0].otcVar_comm_Change < 0){
+                        document.getElementById("otcVar_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_comm +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcVar_comm_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcVar_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_comm +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcVar_comm_Change +'</span></div>';
+                    }
+                    if (data[0].otcPnl_comm_Change > 0){
+                        document.getElementById("otcPnl_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_comm +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcPnl_comm_Change +'</span></div>';
+                    }else if(data[0].otcPnl_comm_Change < 0){
+                        document.getElementById("otcPnl_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_comm +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcPnl_comm_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcPnl_comm").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_comm +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcPnl_comm_Change +'</span></div>';
+                    }
+
+                    if (data[0].otcAmt_other_Change > 0){
+                        document.getElementById("otcAmt_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_other +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcAmt_other_Change +'</span></div>';
+                    }else if(data[0].otcAmt_other_Change < 0){
+                        document.getElementById("otcAmt_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_other +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcAmt_other_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcAmt_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcAmt_other +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcAmt_other_Change +'</span></div>';
+                    }
+                    if (data[0].otcCashDelta_other_Change > 0){
+                        document.getElementById("otcCashDelta_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_other +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcCashDelta_other_Change +'</span></div>';
+                    }else if(data[0].otcCashDelta_other_Change < 0){
+                        document.getElementById("otcCashDelta_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_other +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcCashDelta_other_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcCashDelta_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcCashDelta_other +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcCashDelta_other_Change +'</span></div>';
+                    }
+                    if (data[0].otcVar_other_Change > 0){
+                        document.getElementById("otcVar_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_other +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcVar_other_Change +'</span></div>';
+                    }else if(data[0].otcVar_other_Change < 0){
+                        document.getElementById("otcVar_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_other +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcVar_other_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcVar_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].otcVar_other +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcVar_other_Change +'</span></div>';
+                    }
+                    if (data[0].otcPnl_other_Change > 0){
+                        document.getElementById("otcPnl_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_other +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].otcPnl_other_Change +'</span></div>';
+                    }else if(data[0].otcPnl_other_Change < 0){
+                        document.getElementById("otcPnl_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_other +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].otcPnl_other_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("otcPnl_other").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].otcPnl_other +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].otcPnl_other_Change +'</span></div>';
+                    }
+
+                    if (data[0].ommAmt_fut_Change > 0){
+                        document.getElementById("ommAmt_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt_fut +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommAmt_fut_Change +'</span></div>';
+                    }else if(data[0].ommAmt_fut_Change < 0){
+                        document.getElementById("ommAmt_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt_fut +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommAmt_fut_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommAmt_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt_fut +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommAmt_fut_Change +'</span></div>';
+                    }
+                    if (data[0].ommCashDelta_fut_Change > 0){
+                        document.getElementById("ommCashDelta_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta_fut +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommCashDelta_fut_Change +'</span></div>';
+                    }else if(data[0].ommCashDelta_fut_Change < 0){
+                        document.getElementById("ommCashDelta_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta_fut +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommCashDelta_fut_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommCashDelta_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta_fut +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommCashDelta_fut_Change +'</span></div>';
+                    }
+                    if (data[0].ommVar_fut_Change > 0){
+                        document.getElementById("ommVar_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar_fut +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommVar_fut_Change +'</span></div>';
+                    }else if(data[0].ommVar_fut_Change < 0){
+                        document.getElementById("ommVar_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar_fut +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommVar_fut_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommVar_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar_fut +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommVar_fut_Change +'</span></div>';
+                    }
+                    if (data[0].ommPnl_fut_Change > 0){
+                        document.getElementById("ommPnl_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl_fut +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommPnl_fut_Change +'</span></div>';
+                    }else if(data[0].ommPnl_fut_Change < 0){
+                        document.getElementById("ommPnl_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl_fut +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommPnl_fut_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommPnl_fut").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl_fut +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommPnl_fut_Change +'</span></div>';
+                    }
+
+                    if (data[0].ommAmt_opt_Change > 0){
+                        document.getElementById("ommAmt_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt_opt +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommAmt_opt_Change +'</span></div>';
+                    }else if(data[0].ommAmt_opt_Change < 0){
+                        document.getElementById("ommAmt_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt_opt +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommAmt_opt_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommAmt_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommAmt_opt +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommAmt_opt_Change +'</span></div>';
+                    }
+                    if (data[0].ommCashDelta_opt_Change > 0){
+                        document.getElementById("ommCashDelta_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta_opt +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommCashDelta_opt_Change +'</span></div>';
+                    }else if(data[0].ommCashDelta_opt_Change < 0){
+                        document.getElementById("ommCashDelta_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta_opt +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommCashDelta_opt_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommCashDelta_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommCashDelta_opt +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommCashDelta_opt_Change +'</span></div>';
+                    }
+                    if (data[0].ommVar_opt_Change > 0){
+                        document.getElementById("ommVar_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar_opt +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommVar_opt_Change +'</span></div>';
+                    }else if(data[0].ommVar_opt_Change < 0){
+                        document.getElementById("ommVar_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar_opt +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommVar_opt_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommVar_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].ommVar_opt +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommVar_opt_Change +'</span></div>';
+                    }
+                    if (data[0].ommPnl_opt_Change > 0){
+                        document.getElementById("ommPnl_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl_opt +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommPnl_opt_Change +'</span></div>';
+                    }else if(data[0].ommPnl_opt_Change < 0){
+                        document.getElementById("ommPnl_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl_opt +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommPnl_opt_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommPnl_opt").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommPnl_opt +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommPnl_opt_Change +'</span></div>';
+                    }
+                    if (data[0].ommBack_Change > 0){
+                        document.getElementById("ommBack").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommBack +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].ommBack_Change +'</span></div>';
+                    }else if(data[0].ommBack_Change < 0){
+                        document.getElementById("ommBack").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommBack +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].ommBack_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("ommBack").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].ommBack +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].ommBack_Change +'</span></div>';
+                    }
+
+
+                    if (data[0].cAmt_fund_Change > 0){
+                        document.getElementById("cAmt_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt_fund +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cAmt_fund_Change +'</span></div>';
+                    }else if(data[0].cAmt_fund_Change < 0){
+                        document.getElementById("cAmt_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt_fund +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cAmt_fund_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cAmt_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt_fund +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cAmt_fund_Change +'</span></div>';
+                    }
+                    if (data[0].cCashDelta_fund_Change > 0){
+                        document.getElementById("cCashDelta_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta_fund +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cCashDelta_fund_Change +'</span></div>';
+                    }else if(data[0].cCashDelta_fund_Change < 0){
+                        document.getElementById("cCashDelta_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta_fund +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cCashDelta_fund_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cCashDelta_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta_fund +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cCashDelta_fund_Change +'</span></div>';
+                    }
+                    if (data[0].cVar_fund_Change > 0){
+                        document.getElementById("cVar_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar_fund +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cVar_fund_Change +'</span></div>';
+                    }else if(data[0].cVar_fund_Change < 0){
+                        document.getElementById("cVar_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar_fund +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cVar_fund_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cVar_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar_fund +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cVar_fund_Change +'</span></div>';
+                    }
+                    if (data[0].cPnl_fund_Change > 0){
+                        document.getElementById("cPnl_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl_fund +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cPnl_fund_Change +'</span></div>';
+                    }else if(data[0].cPnl_fund_Change < 0){
+                        document.getElementById("cPnl_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl_fund +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cPnl_fund_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cPnl_fund").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl_fund +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cPnl_fund_Change +'</span></div>';
+                    }
+
+                    if (data[0].cAmt_basic_Change > 0){
+                        document.getElementById("cAmt_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt_basic +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cAmt_basic_Change +'</span></div>';
+                    }else if(data[0].cAmt_basic_Change < 0){
+                        document.getElementById("cAmt_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt_basic +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cAmt_basic_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cAmt_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cAmt_basic +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cAmt_basic_Change +'</span></div>';
+                    }
+                    if (data[0].cCashDelta_basic_Change > 0){
+                        document.getElementById("cCashDelta_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta_basic +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cCashDelta_basic_Change +'</span></div>';
+                    }else if(data[0].cCashDelta_basic_Change < 0){
+                        document.getElementById("cCashDelta_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta_basic +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cCashDelta_basic_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cCashDelta_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cCashDelta_basic +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cCashDelta_basic_Change +'</span></div>';
+                    }
+                    if (data[0].cVar_basic_Change > 0){
+                        document.getElementById("cVar_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar_basic +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cVar_basic_Change +'</span></div>';
+                    }else if(data[0].cVar_basic_Change < 0){
+                        document.getElementById("cVar_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar_basic +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cVar_basic_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cVar_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 45%">'+ data[0].cVar_basic +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cVar_basic_Change +'</span></div>';
+                    }
+                    if (data[0].cPnl_basic_Change > 0){
+                        document.getElementById("cPnl_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl_basic +'</span><span style="color: #c10000">&#x25B2</span><span style="float:right">'+ data[0].cPnl_basic_Change +'</span></div>';
+                    }else if(data[0].cPnl_basic_Change < 0){
+                        document.getElementById("cPnl_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl_basic +'</span><span style="color: #07a807">&#x25BC</span><span style="float:right">'+ Math.abs(data[0].cPnl_basic_Change) +'</span></div>';
+                    }else{
+                        document.getElementById("cPnl_basic").innerHTML= '<div style="text-align: left;"><span style="float:left; width: 50%">'+ data[0].cPnl_basic +'</span><span>&thinsp;&#8211</span><span style="float:right">'+ data[0].cPnl_basic_Change +'</span></div>';
+                    }
+                }
+            }
+        })
+        $.ajax({
+            url: "/fxglb/productEchartsView?date="+data.field.searchDate,
+            success: function (res) {
+                console.log(res)
+                if(res.code==2000){
+                    let data = res.data;
+                    lineBarOption.xAxis[0].data = data.date;
+                    lineBarOption.series[0].data = data.exposure;
+                    lineBarOption.series[1].data = data.pnl;
+                    lineBar.setOption(lineBarOption);
+
+                    lineOption.series[0].data = data.fund;
+                    line.setOption(lineOption);
+
+                }
+            }
+        });
+        var dates = data.field.searchDate;
+        tableIns.reload({
+            where: { //设定异步数据接口的额外参数，任意设
+                "date": dates
+            }
+        });
+    });
+
+    });
+</script>
+
+</body>
+</html>
